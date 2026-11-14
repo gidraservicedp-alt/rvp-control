@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shared identifier color across office and customer/contractor cabinets. */
+.rpv-application-number {
+  color: #f9a8d4;
+}
+
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(20px); }
   to { opacity: 1; transform: translateX(0); }
