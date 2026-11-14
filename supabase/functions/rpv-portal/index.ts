@@ -1,3 +1,4 @@
+import { officeFinance } from './finance.ts';
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { PortalError, verifyTelegram, monthRange, uuid } from "./auth.ts";
 import { notifyPublished, notifyContact } from "./notifications.ts";
@@ -106,6 +107,10 @@ async function visibleSite(user: number, id: string) {
   return s;
 }
 async function dispatch(req: Request, b: any): Promise<any> {
+  if (['office.finance','office.finance_history','office.finance_set','office.finance_confirm'].includes(b.action)) {
+    const admin=await office(req,false);
+    return await officeFinance(db,b,admin);
+  }
   if (String(b.action || "").startsWith("office.")) {
     const admin = await office(
       req,
