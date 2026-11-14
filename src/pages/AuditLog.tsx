@@ -564,7 +564,7 @@ export default function AuditLog() {
 
                           {applicationNumber && (
                             <span className="font-mono text-xs text-blue-400">
-                              {applicationNumber}
+                              <bdi className="rpv-application-number">{applicationNumber}</bdi>
                             </span>
                           )}
                         </div>

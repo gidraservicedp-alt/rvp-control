@@ -95,7 +95,7 @@ function EditForm({state, initialSite, contractors, onClose, onSaved, onReload}:
       <button type="button" className="flex items-center gap-2 text-sm text-sky-200 disabled:opacity-40" disabled={busy} onClick={onClose}><ArrowLeft size={18}/>До заявки</button>
       <div className="mt-4 flex items-start gap-3"><ShieldCheck className="shrink-0 text-orange-300 mt-1" size={22}/><div className="min-w-0">
         <h2 className="text-xl font-bold text-sky-50">Редагування заявки</h2>
-        <p className="mt-1 text-sm text-sky-200 break-words">{a.application_number} · {statusLabel(a.status)}</p>
+        <p className="mt-1 text-sm text-sky-200 break-words"><bdi className="rpv-application-number">{a.application_number}</bdi> · {statusLabel(a.status)}</p>
         <p className="mt-1 text-xs text-orange-200/90">Лише головний адміністратор</p>
       </div></div>
     </header>

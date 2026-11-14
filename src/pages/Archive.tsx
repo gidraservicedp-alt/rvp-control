@@ -776,7 +776,7 @@ export default function Archive({
 
                         <td className="px-5 py-3.5">
                           <span className="font-mono text-xs font-semibold text-blue-400">
-                            {item.number}
+                            <bdi className="rpv-application-number">{item.number}</bdi>
                           </span>
                         </td>
 

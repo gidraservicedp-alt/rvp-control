@@ -90,7 +90,7 @@ export default function CustomerCalendar({ revision, onCreate, canCreate }: { re
         const state = visitStatus(v,today);
         return <button key={v.id} className="rpv-calendar-event" onClick={() => details(v)}>
           <span className={`rpv-event-date ${state.tone}`}><b>{Number(v.calendar_day.slice(-2))}</b><small>{new Intl.DateTimeFormat("uk-UA",{month:"short",timeZone:"UTC"}).format(new Date(v.calendar_day+"T12:00:00Z"))}</small></span>
-          <span className="rpv-event-text"><strong>{v.network || "АЗК"} {v.site_code || v.site_label}</strong><span>{v.description || v.title}</span><small>{state.label} · {v.application_number}</small></span><ChevronRight size={18}/>
+          <span className="rpv-event-text"><strong>{v.network || "АЗК"} {v.site_code || v.site_label}</strong><span>{v.description || v.title}</span><small>{state.label} · <bdi className="rpv-application-number">{v.application_number}</bdi></small></span><ChevronRight size={18}/>
         </button>;
       })}</div>
       {data?.more && <button className="rpv-calendar-load" disabled={busy} onClick={() => setPage((v) => v + 1)}>Завантажити ще · показано {events.length} заявок</button>}
@@ -115,7 +115,7 @@ function VisitDetails({visit: v, today, onClose}: {visit: Visit; today: string; 
     return () => { document.removeEventListener("keydown",key); previous?.focus(); };
   }, []);
   return <div className="rpv-modal-backdrop"><div ref={dialog} className="rpv-card rpv-visit-details" role="dialog" aria-modal="true" aria-labelledby="visit-title">
-    <div className="rpv-section-title"><h2 id="visit-title">Заявка {v.application_number}</h2><button ref={closeButton} aria-label="Закрити заявку" onClick={onClose}><X size={18}/></button></div>
+    <div className="rpv-section-title"><h2 id="visit-title">Заявка <bdi className="rpv-application-number">{v.application_number}</bdi></h2><button ref={closeButton} aria-label="Закрити заявку" onClick={onClose}><X size={18}/></button></div>
     <p className={`rpv-visit-state ${visitStatus(v,today).tone}`}>{visitStatus(v,today).label}</p>
     <h3>АЗК {v.network} {v.site_code || v.site_label}</h3><p>{v.address}</p>
     <dl className="rpv-passport"><div><dt>{v.date_kind === "deadline" ? "Граничний термін" : "Запланована дата"}</dt><dd>{visitDayLabel(v.calendar_day)}</dd></div><div><dt>Статус заявки</dt><dd>{statusLabel(v.status)}</dd></div><div><dt>Етап виконавця</dt><dd>{statusLabel(v.contractor_stage)}</dd></div></dl>

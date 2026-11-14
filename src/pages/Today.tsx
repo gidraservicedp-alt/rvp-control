@@ -279,7 +279,7 @@ export default function Today({
                 >
                   <div className="ws-work-copy">
                     <div className="ws-work-meta">
-                      <span>{item.app.number}</span>
+                      <span><bdi className="rpv-application-number">{item.app.number}</bdi></span>
                       <span
                         className={
                           item.urgent ? "ws-tag ws-tag-orange" : "ws-tag"

@@ -309,7 +309,7 @@ function ActDetailModal({
           <section>
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Заявка</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <DetailRow label="Номер заявки" value={act.applicationNumber} mono />
+              <DetailRow label="Номер заявки" value={<bdi className="rpv-application-number">{act.applicationNumber}</bdi>} mono />
               <DetailRow label="Код АЗК" value={
                 <span className="flex items-center gap-1"><Hash size={12} className="text-slate-500" />{act.applicationAzkCode ?? '—'}</span>
               } />
@@ -557,7 +557,7 @@ export default function Acts({ initialId, onRecordClose }: { initialId?: string;
                     </div>
                     <p className="text-sm text-slate-300 truncate">{act.contractorName}</p>
                     <p className="text-xs text-slate-500 truncate">
-                      Заявка {act.applicationNumber}
+                      Заявка <bdi className="rpv-application-number">{act.applicationNumber}</bdi>
                     </p>
                   </div>
                 </div>

@@ -370,7 +370,7 @@ function App() {
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 text-xl">🔔</div>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-white">Нова заявка</p>
-                  <p className="mt-1 text-lg font-bold text-cyan-400">{newApplication.number}</p>
+                  <p className="mt-1 text-lg font-bold text-cyan-400"><bdi className="rpv-application-number">{newApplication.number}</bdi></p>
                   <p className="mt-1 truncate text-white">{newApplication.object}</p>
                   {newApplication.address && <p className="mt-1 line-clamp-2 text-sm text-slate-400">📍 {newApplication.address}</p>}
                 </div>

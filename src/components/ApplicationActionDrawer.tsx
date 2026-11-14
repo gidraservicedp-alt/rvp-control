@@ -317,7 +317,7 @@ export default function ApplicationActionDrawer({ application, onClose, onChange
         <header className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-4 sm:px-6">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-sm font-bold text-blue-400">{application.number}</span>
+              <span className="font-mono text-sm font-bold text-blue-400"><bdi className="rpv-application-number">{application.number}</bdi></span>
               <StatusBadge label={resultLabel || (awaitingAct ? 'Очікуємо акт / перевірку' : application.status)} className={getApplicationStatusColor(application.status)} />
               {hasProblem && (
                 <span className="rounded-full border border-rose-500/25 bg-rose-500/10 px-2 py-0.5 text-[11px] font-semibold text-rose-300">

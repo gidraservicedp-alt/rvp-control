@@ -247,7 +247,7 @@ export default function Customers({ mode = "managers", initialNetwork = "", onNe
                 <div key={a.id} className="rpv-publish">
                   <p>
                     <b>
-                      {a.application_number} · {a.title}
+                      <bdi className="rpv-application-number">{a.application_number}</bdi> · {a.title}
                     </b>
                   </p>
                   <p>{a.address}</p>

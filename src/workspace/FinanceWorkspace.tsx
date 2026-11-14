@@ -82,7 +82,7 @@ function FinancialHistory({
                   <strong>{eventTitle(e.kind)}</strong>
                   <time>{formatDateTime(e.occurred_at)}</time>
                   <a href={`?page=payouts&record=${e.application_id}`}>
-                    {e.application_number}
+                    <bdi className="rpv-application-number">{e.application_number}</bdi>
                   </a>
                   <p>
                     {e.contractor_name} ·{" "}
@@ -178,7 +178,7 @@ function SettlementDialog({
         </header>
         <div className="ws-fin-body">
           <p>
-            <b>{row.application_number}</b> · {row.contractor_name}
+            <b><bdi className="rpv-application-number">{row.application_number}</bdi></b> · {row.contractor_name}
           </p>
           {action === "set" ? (
             <>
@@ -555,7 +555,7 @@ export default function FinanceWorkspace({
               <article className="ws-fin-entry" key={r.id}>
                 <div className="ws-fin-entry-head">
                   <a href={`?page=applications&application=${r.id}`}>
-                    {r.application_number}
+                    <bdi className="rpv-application-number">{r.application_number}</bdi>
                   </a>
                   <span
                     className={`ws-tag ${r.payout_status === "paid" ? "ws-tag-completed" : ""}`}

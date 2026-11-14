@@ -51,7 +51,7 @@ export default function ObjectProfile({ id, onBack, onOpenApplication, onOpenAct
           const contractor = [app.contractor?.first_name, app.contractor?.last_name].filter(Boolean).join(' ');
           const amount=Number(app.payout_amount)||(app.payout_status!=='paid'?Number(app.unit_price)*Number(app.actual_volume):0);
           return <article className="ws-history-card" key={app.id}>
-            <div className="ws-history-heading"><button className="ws-record-title" onClick={() => onOpenApplication(app.id)}>{app.application_number || 'Заявка'}</button><span className={`ws-tag ${app.status === 'completed' ? 'ws-tag-completed' : ''}`}>{statusLabel(app.status)}</span></div>
+            <div className="ws-history-heading"><button className="ws-record-title" onClick={() => onOpenApplication(app.id)}><bdi className="rpv-application-number">{app.application_number || 'Заявка'}</bdi></button><span className={`ws-tag ${app.status === 'completed' ? 'ws-tag-completed' : ''}`}>{statusLabel(app.status)}</span></div>
             <p>{app.description || app.title}</p>
             <dl className="ws-history-facts">
               <div><dt>Створено</dt><dd>{formatDate(app.created_at)}</dd></div>

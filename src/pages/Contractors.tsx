@@ -215,7 +215,7 @@ function ContractorProfileModal({
                 {apps.map(app => (
                   <div key={app.id} className="flex items-center justify-between bg-white/[0.03] rounded-lg px-4 py-3">
                     <div>
-                      <span className="font-mono text-xs text-blue-400">{app.number}</span>
+                      <span className="font-mono text-xs text-blue-400"><bdi className="rpv-application-number">{app.number}</bdi></span>
                       <p className="text-sm text-slate-300 mt-0.5 truncate max-w-[250px]">{app.customer}</p>
                       <p className="text-xs text-slate-500">{formatDate(app.date)}</p>{app.status==='completed'&&<a className="text-xs text-sky-300" href={`?page=payouts&record=${app.id}`}>{app.payoutStatus==='paid'?'Виплачено · історія':'Не оплачено · розрахунок'}</a>}
                     </div>

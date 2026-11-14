@@ -216,7 +216,7 @@ function CustomerPortal() {
         </button>
         {created && (
           <p role="status">
-            Заявку {created} створено. Офіс отримає її для опрацювання.
+            Заявку <bdi className="rpv-application-number">{created}</bdi> створено. Офіс отримає її для опрацювання.
           </p>
         )}
       </div>
@@ -508,7 +508,7 @@ function ActList({
             <p>
               {a.site_label} · {a.work_date.split("-").reverse().join(".")}
             </p>
-            <small>Заявка {a.application_number || "—"}</small>
+            <small>Заявка <bdi className="rpv-application-number">{a.application_number || "—"}</bdi></small>
           </div>
           <div className="rpv-record-end">
             <b>
@@ -538,7 +538,7 @@ function ApplicationCard({
   return (
     <article className="rpv-job">
       <div className="rpv-job-top">
-        <strong>{app.application_number}</strong>
+        <strong><bdi className="rpv-application-number">{app.application_number}</bdi></strong>
         <span>{app.awaiting_act ? "Результат на перевірці" : app.has_problem ? "Потребує уваги" : app.arrived_at && app.status!=="completed" ? "На об’єкті" : statusLabel(app.status)}</span>
       </div>
       <h3>{app.title}</h3>

@@ -12,7 +12,7 @@ export default function ServiceResult({app,onClose,onDone}:{app:Application;onCl
   if(!saved){await portal('contractor.report',{application:app.id,version:app.updated_at,date,volume:parseWorkVolume(volume),notes});setSaved(true);}
   await uploadResult(app.id,key.current,file);onDone();
  }catch(e){setError((e as Error).message);}finally{pending.current=false;setBusy(false);}}
- return <div className="rpv-modal-backdrop"><div ref={dialog} className="rpv-card rpv-create" role="dialog" aria-modal="true" aria-labelledby="service-result-title"><div className="rpv-section-title"><h2 id="service-result-title">Первинний акт · {app.application_number}</h2><button type="button" disabled={busy} onClick={onClose} aria-label="Закрити результат">✕</button></div>
+ return <div className="rpv-modal-backdrop"><div ref={dialog} className="rpv-card rpv-create" role="dialog" aria-modal="true" aria-labelledby="service-result-title"><div className="rpv-section-title"><h2 id="service-result-title">Первинний акт · <bdi className="rpv-application-number">{app.application_number}</bdi></h2><button type="button" disabled={busy} onClick={onClose} aria-label="Закрити результат">✕</button></div>
  <form onSubmit={submit}>
  <label htmlFor="service-volume">Фактично відкачано, м³</label><input id="service-volume" ref={first} inputMode="decimal" value={volume} disabled={busy||saved} onChange={e=>setVolume(e.target.value)} required/>
  <p className="rpv-hint">Обсяг обов’язковий. Вкажіть фактично відкачані куби за первинним актом.</p>

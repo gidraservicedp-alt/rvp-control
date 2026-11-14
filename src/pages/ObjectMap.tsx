@@ -72,7 +72,7 @@ export default function ObjectMap() {
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400"><MapPin size={17}/></div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-xs text-blue-400">{row.application_number || '—'}</span>
+                  <span className="font-mono text-xs text-blue-400"><bdi className="rpv-application-number">{row.application_number || '—'}</bdi></span>
                   <span className={`rounded-full border px-2 py-0.5 text-[10px] ${statusStyle(row)}`}>{row.contractor_stage === 'problem' ? 'Проблема' : row.status || 'new'}</span>
                 </div>
                 <p className="mt-2 text-sm font-medium text-slate-200">{row.title || 'Обʼєкт'}</p>
