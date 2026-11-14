@@ -57,13 +57,13 @@ export function buildWorkItems(
         !completed && (app.hasProblem || app.contractorStage === "problem");
       const base = { app, urgent: !!problem || overdue, overdue };
       if (completed)
-        return app.payoutStatus === "Очікує" && app.payoutAmount > 0
+        return app.payoutStatus === "Очікує"
           ? [
               {
                 ...base,
                 queue: "payout",
-                reason: "Роботу прийнято",
-                action: "Перевірити виплату",
+                reason: app.payoutAmount > 0 ? "Роботу прийнято · не оплачено" : "Закрито · суму ще не вказано",
+                action: app.payoutAmount > 0 ? "Перевірити виплату" : "Уточнити розрахунок",
                 priority: 6,
               },
             ]

@@ -3,7 +3,7 @@ import { ArrowRight, ClipboardCheck, RefreshCw } from "lucide-react";
 import { portal, fmt, statusLabel, type Site } from "@/portal/api";
 import { SitePassport } from "@/portal/CustomerDetails";
 import { Pager } from "@/portal/Portal";
-import { formatDate, actStatusLabel } from "@/utils/helpers";
+import { formatDate, formatCurrency, actStatusLabel } from "@/utils/helpers";
 import type { HistoryApplication } from "../../supabase/functions/rpv-portal/site_history";
 import RPVCounter from './RPVCounter';
 
@@ -49,6 +49,7 @@ export default function ObjectProfile({ id, onBack, onOpenApplication, onOpenAct
           const completed = [...app.work_history].sort((a,b) => b.completed_at.localeCompare(a.completed_at))[0]?.completed_at;
           const acts = [...app.acts].sort((a,b) => b.created_at.localeCompare(a.created_at));
           const contractor = [app.contractor?.first_name, app.contractor?.last_name].filter(Boolean).join(' ');
+          const amount=Number(app.payout_amount)||(app.payout_status!=='paid'?Number(app.unit_price)*Number(app.actual_volume):0);
           return <article className="ws-history-card" key={app.id}>
             <div className="ws-history-heading"><button className="ws-record-title" onClick={() => onOpenApplication(app.id)}>{app.application_number || 'Заявка'}</button><span className={`ws-tag ${app.status === 'completed' ? 'ws-tag-completed' : ''}`}>{statusLabel(app.status)}</span></div>
             <p>{app.description || app.title}</p>
@@ -57,10 +58,12 @@ export default function ObjectProfile({ id, onBack, onOpenApplication, onOpenAct
               {completed && <div><dt>Завершено</dt><dd>{formatDate(completed)}</dd></div>}
               <div><dt>Виконавець</dt><dd>{contractor || 'Не призначено'}</dd></div>
               <div><dt>Обсяг</dt><dd>{app.actual_volume == null ? 'Не вказано' : `${fmt(app.actual_volume)} м³`}</dd></div>
+              {app.status==='completed'&&<div><dt>Розрахунок із підрядником</dt><dd>{app.payout_status==='paid'?'Виплачено':'Не оплачено'} · {amount>0?formatCurrency(amount):'Суму не вказано'}{app.paid_at&&<small> · {formatDate(app.paid_at)}</small>}</dd></div>}
             </dl>
             <div className="ws-history-actions">
               <button onClick={() => onOpenApplication(app.id)}>Заявка <ArrowRight size={16} /></button>
               {acts.map(act => <button key={act.id} onClick={() => onOpenAct(act.id)} aria-label={`Первинний акт ${act.act_number || ''} — ${actStatusLabel(act.status)}`}><ClipboardCheck size={16} /><span>Первинний акт<small>{actStatusLabel(act.status)}</small></span></button>)}
+              {app.status==='completed'&&<a className="ws-button" href={`?page=payouts&record=${app.id}`}>Розрахунок та історія</a>}
               {!acts.length && <span className="ws-history-no-act">Первинний акт ще не додано</span>}
             </div>
           </article>;

@@ -1,3 +1,4 @@
+import {fetchFinanceReport} from './financeApi';
 import { supabase } from '@/lib/supabase';
 
 export type ContractorStatus = 'active' | 'inactive';
@@ -18,6 +19,9 @@ export interface ContractorListItem {
   totalApplications: number;
   completedApplications: number;
   totalPayout: number;
+  debt: number;
+  pendingPayoutCount: number;
+  missingAmountCount: number;
   isAdmin: boolean;
 }
 
@@ -31,6 +35,7 @@ export interface ContractorApplication {
   amount: number;
   payoutAmount: number;
   payoutStatus: string;
+  amountKnown: boolean;
 }
 
 interface ContractorRow {
@@ -55,6 +60,8 @@ interface ApplicationRow {
   address: string | null;
   status: string;
   payout_amount: number;
+  unit_price: number;
+  actual_volume: number | null;
   payout_status: string;
   created_at: string;
 }
@@ -87,11 +94,12 @@ interface AppStatRow {
 }
 
 async function fetchContractorStats(): Promise<Map<string, { total: number; completed: number; payout: number }>> {
-  const { data, error } = await supabase
-    .from('applications')
-    .select('contractor_id, status, payout_amount, payout_status');
-
-  if (error) return new Map();
+  const data: AppStatRow[] = [];
+  for(let offset=0;;offset+=1000){
+    const r=await supabase.from('applications').select('contractor_id,status,payout_amount,payout_status').order('id').range(offset,offset+999);
+    if(r.error)throw new Error('Не вдалося завантажити статистику підрядників.');
+    data.push(...r.data);if(r.data.length<1000)break;
+  }
 
   const stats = new Map<string, { total: number; completed: number; payout: number }>();
 
@@ -121,12 +129,13 @@ async function fetchContractorStats(): Promise<Map<string, { total: number; comp
 }
 
 export async function fetchContractors(): Promise<ContractorListItem[]> {
-  const [contractorResult, statsMap] = await Promise.all([
+  const [contractorResult, statsMap, finance] = await Promise.all([
     supabase
       .from('contractors')
       .select(CONTRACTOR_SELECT)
       .order('created_at', { ascending: true }),
     fetchContractorStats(),
+    fetchFinanceReport(),
   ]);
 
   if (contractorResult.error) {
@@ -137,6 +146,7 @@ export async function fetchContractors(): Promise<ContractorListItem[]> {
 
   return rows.map(row => {
     const stats = statsMap.get(row.id);
+    const settlement=finance.contractors.find(c=>c.contractor_id===row.id);
 
     return {
       id: row.id,
@@ -153,7 +163,10 @@ export async function fetchContractors(): Promise<ContractorListItem[]> {
       createdAt: row.created_at,
       totalApplications: stats?.total ?? 0,
       completedApplications: stats?.completed ?? 0,
-      totalPayout: stats?.payout ?? 0,
+      totalPayout: settlement?.paid ?? 0,
+      debt: settlement?.debt ?? 0,
+      pendingPayoutCount: settlement?.pending_count ?? 0,
+      missingAmountCount: settlement?.missing_amount_count ?? 0,
       isAdmin: row.is_admin === true,
     };
   });
@@ -173,7 +186,7 @@ export async function fetchContractorApplications(contractorId: string): Promise
       title,
       address,
       status,
-      payout_amount,
+      payout_amount,unit_price,actual_volume,
       payout_status,
       created_at
     `)
@@ -193,8 +206,9 @@ export async function fetchContractorApplications(contractorId: string): Promise
     customer: row.title ?? '—',
     address: row.address ?? '—',
     status: row.status,
-    amount: Number(row.payout_amount) || 0,
-    payoutAmount: Number(row.payout_amount) || 0,
+    amount: Number(row.payout_amount)|| (row.payout_status!=='paid'?Number(row.unit_price)*Number(row.actual_volume):0)||0,
+    payoutAmount: Number(row.payout_amount)|| (row.payout_status!=='paid'?Number(row.unit_price)*Number(row.actual_volume):0)||0,
+    amountKnown: Number(row.payout_amount)>0||(row.payout_status!=='paid'&&Number(row.unit_price)>0&&Number(row.actual_volume)>0),
     payoutStatus: row.payout_status,
   }));
 }

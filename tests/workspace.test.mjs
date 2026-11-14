@@ -38,7 +38,7 @@ test("Each order has one next action; newest submitted result wins over old reje
   assert.equal(rows[0].queue, "review");
   assert.equal(rows[0].actId, "new");
 });
-test("Cancelled and paid jobs cannot reappear as overdue work; zero payouts do not create debt tasks", () => {
+test("Cancelled and paid jobs cannot reappear as overdue work; closed jobs without a price remain visible for settlement", () => {
   const rows = buildWorkItems(
     [
       app("cancelled", { status: "Скасована", hasProblem: true }),
@@ -56,9 +56,10 @@ test("Cancelled and paid jobs cannot reappear as overdue work; zero payouts do n
   );
   assert.deepEqual(
     rows.map((r) => r.app.id),
-    ["pending"],
+    ["pending", "zero"],
   );
   assert.equal(rows[0].queue, "payout");
+  assert.match(rows.find(r=>r.app.id==="zero").reason, /суму ще не вказано/);
   assert.equal(rows[0].urgent, false);
 });
 test("Problems and overdue orders precede normal dispatch, without duplicating a record", () => {

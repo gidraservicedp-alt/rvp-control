@@ -7,6 +7,7 @@ export type HistoryApplication = {
   status: string; created_at: string; scheduled_at: string | null; actual_volume: number | null;
   customer_site_id: string; contractor: { first_name: string | null; last_name: string | null } | null;
   acts: { id: string; act_number: string | null; status: string; created_at: string }[];
+  payout_amount: number|null; unit_price: number|null; payout_status: string; paid_at: string|null;
   work_history: { completed_at: string }[];
 };
 
@@ -48,7 +49,7 @@ export async function resolveOfficeSite(db: any, id: string) {
 export async function officeSiteHistory(db: any, id: string, page: number) {
   const selected = await resolveOfficeSite(db, id);
   const reply = await db.from('applications').select(`
-    id,application_number,title,description,status,created_at,scheduled_at,actual_volume,customer_site_id,
+    id,application_number,title,description,status,created_at,scheduled_at,actual_volume,customer_site_id,payout_amount,unit_price,payout_status,paid_at,
     contractor:contractors(first_name,last_name),acts(id,act_number,status,created_at),work_history(completed_at)
   `, { count: 'exact' }).eq('customer_site_id', selected.id)
     .order('created_at', { ascending: false }).order('id')

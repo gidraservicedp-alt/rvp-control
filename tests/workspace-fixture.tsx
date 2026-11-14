@@ -1,6 +1,7 @@
 // Development-only synthetic browser scenario. Not imported by the production entry.
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { financeFixture } from './finance-fixture';
 import { volumeFixture } from './volume-fixture';
 const sid = "40000000-0000-0000-0000-000000000001";
 const site = {
@@ -31,12 +32,12 @@ const apps = Array.from({ length: 7 }, (_, i) => ({
     i === 0
       ? "Відкачка РПВ. Виконавець повідомив про перекритий під’їзд."
       : "Планове обслуговування септика. Відкачка РПВ.",
-  contractor_id: i === 1 ? null : "c1",
+  contractor_id: i === 1 ? null : "70000000-0000-0000-0000-000000000080",
   contractor:
     i === 1
       ? null
       : {
-          id: "c1",
+          id: "70000000-0000-0000-0000-000000000080",
           first_name: "Тестовий",
           last_name: "Виконавець",
           phone: "+380000000000",
@@ -70,7 +71,7 @@ const acts = [
     application_id: apps[3].id,
     status: "pending",
     created_at: date(),
-    contractor_id: "c1",
+    contractor_id: "70000000-0000-0000-0000-000000000080",
     contractor: apps[0].contractor,
     application: apps[3],
     act_files: [],
@@ -84,7 +85,7 @@ if (qaParams.get('fixture') === 'object-history') {
     apps[i].status='completed';apps[i].has_problem=false;apps[i].problem_comment=null;apps[i].contractor_stage='accepted';
     apps[i].actual_volume=i===0?null:10;apps[i].created_at=date(-72+i);
     acts.push({id:`60000000-0000-0000-0000-${String(i+10).padStart(12,'0')}`,act_number:`A-DEMO-${i+1}`,
-      application_id:apps[i].id,status:'approved',created_at:date(-48+i),contractor_id:'c1',contractor:apps[i].contractor,application:apps[i],act_files:[]});
+      application_id:apps[i].id,status:'approved',created_at:date(-48+i),contractor_id:'70000000-0000-0000-0000-000000000080',contractor:apps[i].contractor,application:apps[i],act_files:[]});
   }
 }
 if(qaParams.get('fixture') === 'office-act') {
@@ -137,6 +138,7 @@ window.fetch = async (input, init) => {
   }
   if (url.pathname.endsWith("/rpv-portal")) {
     const b = JSON.parse(String(init?.body));
+    if (b.action?.startsWith('office.finance'))return financeFixture(b);
     if (b.action === 'office.volume') {
       if(simulateVolumeFailure){simulateVolumeFailure=false;return Response.json({error:'Не вдалося завантажити лічильник РПВ. Спробуйте ще раз.'},{status:500});}
       return json(volumeFixture(b));
@@ -182,7 +184,7 @@ window.fetch = async (input, init) => {
           : table === "contractors"
             ? [
                 {
-                  id: "c1",
+                  id: "70000000-0000-0000-0000-000000000080",
                   first_name: "Тестовий",
                   last_name: "Виконавець",
                   phone: "+380000000000",
