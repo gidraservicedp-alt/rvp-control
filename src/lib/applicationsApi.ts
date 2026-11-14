@@ -86,6 +86,7 @@ function buildContractorName(contractor: ContractorRow | null): string {
 function mapRowToApplication(row: ApplicationRow): Application {
   const contractorName = buildContractorName(row.contractor);
   const contractorPhone = row.contractor?.phone ?? '—';
+  const payoutAmount = Number(row.payout_amount)|| (row.payout_status!=='paid'?Math.round(Number(row.actual_volume)*Number(row.unit_price)*100)/100:0)||0;
 
   return {
     id: row.id,
@@ -100,13 +101,13 @@ function mapRowToApplication(row: ApplicationRow): Application {
     contractorPhone,
     phone: contractorPhone,
     status: normalizeStatus(row.status),
-    amount: Number(row.payout_amount ?? 0),
+    amount: payoutAmount,
     scheduledDate: row.scheduled_at ?? '',
     description: row.description ?? '',
     managerComment: row.manager_comment ?? '',
     actualVolume: Number(row.actual_volume ?? 0),
     unitPrice: Number(row.unit_price ?? 0),
-    payoutAmount: Number(row.payout_amount)|| (row.payout_status!=='paid'?Math.round(Number(row.actual_volume)*Number(row.unit_price)*100)/100:0)||0,
+    payoutAmount,
     payoutStatus: normalizePayoutStatus(row.payout_status),
     payoutReceipt: row.payout_receipt_file_id ?? undefined,
     payoutReceiptName: row.payout_receipt_name ?? undefined,
