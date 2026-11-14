@@ -18,6 +18,7 @@ const other = {
   id: "40000000-0000-0000-0000-000000000002",
   label: "АЗК UPG 0013",
   passport_network: "UPG",
+  region: "Київ · Київська область",
   address: "м. Київ, вул. Тестова, 7",
 };
 const date = (hours = 0) =>
@@ -139,6 +140,16 @@ window.fetch = async (input, init) => {
   }
   if (url.pathname.endsWith("/rpv-portal")) {
     const b = JSON.parse(String(init?.body));
+    if (b.action === 'office.create_application') {
+      const target=[site,other].find(s=>s.id===b.site);
+      if(!target)return Response.json({error:'Оберіть паспорт зі списку.'},{status:409});
+      const existing=apps.find(a=>a.id===b.request);
+      if(!existing) apps.unshift({...apps[1],id:b.request,application_number:'G-DEMO-CREATED',title:target.label,
+        address:target.address,customer_site_id:target.id,azk_code:target.code,description:b.work,
+        status:'assigned',contractor_stage:'offered',contractor_id:b.contractor,contractor:apps[0].contractor,
+        payout_amount:b.payout,deadline_at:b.date+'T21:59:59Z',created_at:date(),updated_at:date()});
+      return json({id:b.request,application_number:'G-DEMO-CREATED',created:!existing,notificationSent:true});
+    }
     if (b.action === 'office.work_volume' || b.action === 'office.work_volume_set') {
       const a=apps.find(x=>x.id===b.application)!;
       if(b.action.endsWith('_set')) {

@@ -1,4 +1,5 @@
 import { officeWorkVolume, validWorkVolume } from './work_volume.ts';
+import { officeCreateApplication } from './office_create.ts';
 import { officeFinance } from './finance.ts';
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { PortalError, verifyTelegram, monthRange, uuid } from "./auth.ts";
@@ -124,6 +125,16 @@ async function dispatch(req: Request, b: any): Promise<any> {
       ),
     );
     if (b.action === "office.volume") return await officeVolumeReport(db, b);
+    if (b.action === "office.create_application") {
+      const row = await officeCreateApplication(db, b, admin);
+      // Never turn a saved application into a failed creation if Telegram is down.
+      // Replaying the same request returns the saved row without a duplicate notice.
+      const notice = row.created ? await fetch(`${URL}/functions/v1/smart-api`, {
+        method: "POST", headers: {"Content-Type": "application/json", Authorization: req.headers.get("Authorization") || ""},
+        body: JSON.stringify({action: "notify_application", application_id: row.id}),
+      }).then(r => r.json()).catch(() => ({ok: false})) : null;
+      return {...row, notificationSent: notice ? !!notice.ok : null};
+    }
     if (b.action === "office.site_history") {
       const history = await officeSiteHistory(db, uuid(b.site), page(b.page));
       return { ...history, site: site(history.site) };
