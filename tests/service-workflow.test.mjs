@@ -1,7 +1,9 @@
+import {applyBusinessConflicts} from './fixtures/business-conflicts.mjs';
 import { serviceDatabase } from './fixtures/service-db.mjs';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const db=await serviceDatabase();
+await applyBusinessConflicts(db);
 const owner='10000000-0000-0000-0000-000000000001',dispatcher='10000000-0000-0000-0000-000000000002',accountant='10000000-0000-0000-0000-000000000003',viewer='10000000-0000-0000-0000-000000000004';
 const c='20000000-0000-0000-0000-000000000001',c2='20000000-0000-0000-0000-000000000002',app='30000000-0000-0000-0000-000000000001',site='40000000-0000-0000-0000-000000000001',act='60000000-0000-0000-0000-000000000001';
 await db.exec(`insert into admin_users values('${owner}','owner',true),('${dispatcher}','dispatcher',true),('${accountant}','accountant',true),('${viewer}','viewer',true);insert into contractors values('${c}',123,'active','+380111111111'),('${c2}',124,'active','+380222222222');insert into rpv_customer_sites values('${site}','wog-13','Address');insert into applications(id,application_number,title,address,customer_site_id) values('${app}','G-13','АЗК WOG 13','Address','${site}');`);
@@ -15,18 +17,18 @@ async function review(decision='approved',reason=''){return (await service('sele
 await assert.rejects(service('select rpv_service_assign($1,$2,$3,$4)',[viewer,app,c,await version()]),e=>e.code==='42501');
 await service('select rpv_service_assign($1,$2,$3,$4)',[owner,app,c,await version()]);
 await assert.rejects(action('depart'),e=>e.code==='22023');
-await assert.rejects(action('accept',124),e=>e.code==='40001');
-const stale=await version();await action('accept');await assert.rejects(action('accept',123,'',stale),e=>e.code==='40001');
-await assert.rejects(report(),e=>e.code==='40001');
+await assert.rejects(action('accept',124),e=>e.code==='PT409');
+const stale=await version();await action('accept');await assert.rejects(action('accept',123,'',stale),e=>e.code==='PT409');
+await assert.rejects(report(),e=>e.code==='PT409');
 await action('depart');await action('arrive');await action('problem',123,'Немає доступу');
 assert.equal((await db.query('select contractor_stage,has_problem from applications')).rows[0].contractor_stage,'departed');
 await assert.rejects(report(-1),e=>e.code==='22023');await assert.rejects(report(1.1234),e=>e.code==='22023');
 await report();const submitted=await attach();assert.equal(submitted.created,true);
 await db.exec(`update acts set file_name='metadata.pdf' where id='${act}'`);assert.equal((await db.query('select awaiting_act from applications')).rows[0].awaiting_act,true);
 const retried=await attach();assert.equal(retried.act_id,act);assert.equal((await db.query('select count(*)::int n from act_files')).rows[0].n,1);
-await assert.rejects(attach(act,'foreign-file',124),e=>e.code==='40001');
-await assert.rejects(action('problem',123,'Інша проблема'),e=>e.code==='40001');
-await assert.rejects(service('select rpv_service_assign($1,$2,$3,$4)',[owner,app,c2,await version()]),e=>e.code==='40001');
+await assert.rejects(attach(act,'foreign-file',124),e=>e.code==='PT409');
+await assert.rejects(action('problem',123,'Інша проблема'),e=>e.code==='PT409');
+await assert.rejects(service('select rpv_service_assign($1,$2,$3,$4)',[owner,app,c2,await version()]),e=>e.code==='PT409');
 assert.equal((await db.query('select actual_volume from applications')).rows[0].actual_volume,null);
 await assert.rejects(db.exec(`update acts set service_report='{}'`),e=>e.code==='42501');
 await db.exec(`update rpv_customer_sites set address='Changed'`);
@@ -37,7 +39,7 @@ assert.equal((await review()).changed,true);assert.equal((await review()).change
 assert.equal((await db.query('select count(*)::int n from work_history')).rows[0].n,1);
 assert.equal((await db.query('select sum(pumped_m3) v from rpv_customer_act_data')).rows[0].v,'10');
 assert.equal((await db.query('select payout_status from applications')).rows[0].payout_status,'pending');
-await assert.rejects(review('rejected','Уточніть обсяг'),e=>e.code==='40001');
+await assert.rejects(review('rejected','Уточніть обсяг'),e=>e.code==='PT409');
 async function asOffice(uid,sql){await db.exec(`set role authenticated;select set_config('request.jwt.claim.sub','${uid}',false)`);try{return await db.query(sql);}finally{await db.exec('reset role');}}
 await assert.rejects(asOffice(viewer,`update applications set title='Changed'`),e=>e.code==='42501');
 await assert.rejects(asOffice(dispatcher,`update applications set payout_amount=999`),e=>e.code==='42501');
@@ -71,6 +73,7 @@ await db.exec(`insert into applications(id,contractor_id,application_number,titl
 insert into storage.objects(bucket_id,name) values('application-media','${path}');
 insert into application_files(id,application_id,storage_path,category,file_name,file_type,uploaded_by) values('${webFile}','${webApp}','${path}','act','original.png','image/png','${owner}');`);
 await db.exec(await fs.readFile(new URL('../supabase/migrations/20261114182856_primary_act_registry.sql',import.meta.url),'utf8'));
+await applyBusinessConflicts(db);
 const registered=(await db.query('select * from acts where application_id=$1',[webApp])).rows[0];
 assert.equal(registered.status,'pending');assert.equal(registered.service_report,null);
 assert.equal((await db.query('select status from applications where id=$1',[webApp])).rows[0].status,'in_progress');
@@ -97,7 +100,7 @@ assert.equal(completed.status,'completed');assert.equal(completed.awaiting_act,f
 assert.equal(completed.actual_volume,null);assert.equal(completed.payout_status,'pending');
 assert.equal((await db.query('select count(*)::int n from work_history where application_id=$1',[webApp])).rows[0].n,1);
 assert.equal((await service('select rpv_service_review($1,$2,$3) r',[owner,registered.id,'approved']))[0].r.changed,false);
-await assert.rejects(asOffice(owner,insertSecond),e=>e.code==='40001');
+await assert.rejects(asOffice(owner,insertSecond),e=>e.code==='PT409');
 assert.equal((await db.query('select count(*)::int n from act_files where act_id=$1',[registered.id])).rows[0].n,2);
 
 // Reproduce the production failure: an office act has no assigned contractor.

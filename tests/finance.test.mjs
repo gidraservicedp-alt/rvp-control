@@ -1,3 +1,4 @@
+import {applyBusinessConflicts} from './fixtures/business-conflicts.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -33,6 +34,7 @@ test('closed unpaid work creates durable debt, missing amounts stay visible, pay
  await app(5,{amount:800,payout:'paid',paid:dates.month,completed:dates.prev});await app(6,{amount:900,status:'cancelled'});await app(7,{amount:700,status:'in_progress'});await app(8,{volume:12.5,rate:200,contractor:id(81)});
  const initial=(await db.query('select id,payout_amount,payout_status,paid_at from applications order by id')).rows;
  await db.exec(await fs.readFile(new URL('../supabase/migrations/20261114201146_contractor_debt_history.sql',import.meta.url),'utf8'));
+ await applyBusinessConflicts(db);
  assert.deepEqual((await db.query('select id,payout_amount,payout_status,paid_at from applications order by id')).rows,initial,'migration must not invent money or payment');
  const report=async({month=dates.month,contractor=null,application=null,state='all',offset=0,exportAll=false}={})=>(await db.query('select rpv_finance_report($1,$2,$3,$4,$5,$6) r',[month,contractor,application,state,offset,exportAll])).rows[0].r;
  let r=await report();assert.equal(r.stats.debt_total,5200);assert.equal(r.stats.pending_count,5);assert.equal(r.stats.missing_amount_count,2);assert.equal(r.stats.missing_contractor_count,1);
@@ -48,7 +50,7 @@ test('closed unpaid work creates durable debt, missing amounts stay visible, pay
  for(const amount of [-1,0,1.001,'NaN','Infinity'])await assert.rejects(change(3,{amount}),e=>e.code==='22023');
  await assert.rejects(change(3,{contractor:id(81)}),e=>e.code==='23514');
  await db.exec('set role service_role');await change(3,{actor:id(91),amount:600});await db.exec('reset role');
- await assert.rejects(change(3,{action:'confirm',version:0}),e=>e.code==='40001');
+ await assert.rejects(change(3,{action:'confirm',version:0}),e=>e.code==='PT409');
  await change(4,{amount:900,contractor:id(81)});
  r=await report();assert.equal(r.stats.debt_total,6700);assert.equal(r.stats.missing_amount_count,0);assert.equal(r.stats.missing_contractor_count,0);
  assert.equal((await report({contractor:id(81)})).stats.debt_total,3400);
@@ -84,7 +86,7 @@ test('finance endpoints validate auth/roles, expose version conflicts, and scope
  role='owner';for(const body of [{amount:0},{amount:'100'},{amount:1.001},{amount:-1},{version:-1},{application:'bad'}])assert.equal((await req('office.finance_set',{application:id(1),version:0,amount:100,...body})).status,400);
  const before=calls;for(const body of [{month:'2999-01'},{state:'bad'},{export:'yes'},{page:-1},{contractor:'bad'}])assert.equal((await req('office.finance',body)).status,400);assert.equal(calls,before);
  assert.equal((await req('office.finance_confirm',{application:id(1),version:2})).status,200);assert.equal(lastArgs.p_actor,id(90));assert.equal(lastArgs.p_version,2);
- fail={code:'40001',message:'Оновіть виплату'};assert.equal((await req('office.finance_confirm',{application:id(1),version:2})).status,409);
+ fail={code:'PT409',message:'Оновіть виплату'};assert.equal((await req('office.finance_confirm',{application:id(1),version:2})).status,409);
  fail={code:'XX000',message:'private db detail'};const failure=await req();assert.equal(failure.status,500);assert.doesNotMatch(await failure.text(),/private db detail/);
  fail=null;assert.equal((await req('office.finance_history')).status,400);assert.equal((await req('office.finance_history',{contractor:id(80)})).status,200);assert.ok(filters.some(([t,k,v])=>t==='rpv_payout_events'&&k==='contractor_id'&&v===id(80)));
 });

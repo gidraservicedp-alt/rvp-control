@@ -1,3 +1,4 @@
+import {applyBusinessConflicts} from './fixtures/business-conflicts.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -25,6 +26,7 @@ test('owner corrections at every stage preserve acts, history, volume and paymen
   await db.query("insert into rpv_customer_sites(id,site_key,address,label,passport_network,passport_city_code,passport_azk_code) values($1,'wog-90','Old address','WOG 90','WOG','dnipro','90'),($2,'upg-90','New address','UPG 90','UPG','kyiv','90')",[id(20),id(21)]);
   for (const f of ['20261114201146_contractor_debt_history.sql','20261114204607_required_order_volume.sql',migration])
    await db.exec(await fs.readFile(new URL('../supabase/migrations/'+f,import.meta.url),'utf8'));
+  await applyBusinessConflicts(db);
   const service = async (sql,args=[]) => {
    await db.exec('set role service_role');
    try { return (await db.query(sql,args)).rows; } finally { await db.exec('reset role'); }
@@ -73,14 +75,14 @@ test('owner corrections at every stage preserve acts, history, volume and paymen
   const audit=(await db.query('select * from rpv_order_revisions where id=$1',[req])).rows[0];
   assert.equal(audit.before_data.acts[0].service_report.volume,10);assert.equal(audit.after_data.acts[0].service_report.volume,12.345);assert.equal(audit.actor_user_id,id(1));
   assert.equal((await edit(33,patch,{version:before.version,request:req})).changed,false,'retry is idempotent even with the old version');
-  await assert.rejects(edit(33,{...patch,actual_volume:20},{request:req}),e=>e.code==='40001');
-  await assert.rejects(edit(33,{actual_volume:20},{version:before.version}),e=>e.code==='40001');
+  await assert.rejects(edit(33,{...patch,actual_volume:20},{request:req}),e=>e.code==='PT409');
+  await assert.rejects(edit(33,{actual_volume:20},{version:before.version}),e=>e.code==='PT409');
   const timeline=(await db.query("select metadata from application_events where application_id=$1 and event_type='owner_order_edited' order by id",[id(33)])).rows;
   assert.ok(timeline.some(e=>e.metadata.changes.actual_volume?.before===10&&e.metadata.changes.actual_volume?.after===12.345));
   // A review-state change is detected even if updated_at did not change.
   const stale=await read(33);
   await db.query('update acts set reviewed_at=now() where application_id=$1',[id(33)]);
-  await assert.rejects(edit(33,{manager_comment:'stale act'},{version:stale.version}),e=>e.code==='40001');
+  await assert.rejects(edit(33,{manager_comment:'stale act'},{version:stale.version}),e=>e.code==='PT409');
   // Paid work volume may be corrected, while the actual payment stays immutable.
   const paid=await row('applications',35);
   await edit(35,{actual_volume:11.75,customer_site_id:id(21)});
@@ -144,6 +146,6 @@ test('endpoint verifies session and fresh capability; ignores forged actor and r
  assert.deepEqual(await(await req('office.permissions')).json(),{permissions:['applications.edit_any_stage']});
  assert.equal((await req(undefined,{actor:id(2),role:'admin'})).status,200);assert.equal(calls.at(-1).args.p_actor,id(1));
  for(const patch of [{status:'completed'},{actual_volume:0},{actual_volume:'10'},{payout_amount:-1},{work_date:'2026-02-30'},{customer_site_id:'invented'}])assert.equal((await req(undefined,{patch})).status,400);
- fail={code:'40001',message:'Оновіть дані'};assert.equal((await req()).status,409);
+ fail={code:'PT409',message:'Оновіть дані'};assert.equal((await req()).status,409);
  fail={code:'XX000',message:'secret database internals'};const failure=await req();assert.equal(failure.status,500);assert.doesNotMatch(await failure.text(),/secret/);
 });

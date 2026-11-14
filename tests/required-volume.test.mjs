@@ -1,3 +1,4 @@
+import {applyBusinessConflicts} from './fixtures/business-conflicts.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -24,6 +25,7 @@ test('volume is required through direct writes, office approval and contractor r
   insert into acts(id,application_id,status) values('${id(98)}','${id(99)}','approved');`);
   const legacy=(await db.query('select to_jsonb(a) row from applications a where id=$1',[id(99)])).rows[0].row;
   await db.exec(await fs.readFile(new URL('../supabase/migrations/20261114204607_required_order_volume.sql',import.meta.url),'utf8'));
+ await applyBusinessConflicts(db);
   assert.deepEqual((await db.query('select to_jsonb(a) row from applications a where id=$1',[id(99)])).rows[0].row,legacy);
   // Existing incomplete history must not block routine debt/payment metadata updates.
   await db.query('update applications set payout_amount=800 where id=$1',[id(99)]);
@@ -51,7 +53,7 @@ test('volume is required through direct writes, office approval and contractor r
   await assert.rejects(db.query("update acts set status='approved' where id=$1",[actId]),e=>e.code==='P2001');
   await assert.rejects(setVolume(app,12.345,await version(app),viewer),e=>e.code==='42501');
   const stale=await version(app);await setVolume(app,12.345,stale);
-  await assert.rejects(setVolume(app,90,stale),e=>e.code==='40001');
+  await assert.rejects(setVolume(app,90,stale),e=>e.code==='PT409');
   assert.equal((await review(actId))[0].r.changed,true);
   assert.equal((await review(actId))[0].r.changed,false);
   assert.equal((await db.query('select actual_volume from applications where id=$1',[app])).rows[0].actual_volume,'12.345');
@@ -59,7 +61,7 @@ test('volume is required through direct writes, office approval and contractor r
   assert.equal((await db.query('select count(*)::int n from work_history where application_id=$1',[app])).rows[0].n,1);
   assert.equal((await db.query('select count(*)::int n from application_events where application_id=$1',[app])).rows[0].n,1);
   assert.equal((await service("select * from rpv_customer_publish($1,'wog-90',current_date,$2)",['A-TEST-11',999])).length,0);
-  await assert.rejects(setVolume(app,99,await version(app)),e=>e.code==='40001');
+  await assert.rejects(setVolume(app,99,await version(app)),e=>e.code==='PT409');
   const other=await create(2);
   const today=(await db.query("select (now() at time zone 'Europe/Kyiv')::date::text d")).rows[0].d;
   const report=(volume,user=123)=>service('select rpv_service_report($1,$2,$3,$4,$5,$6)',[user,other,null,today,volume,'']);
@@ -114,6 +116,7 @@ test('office volume reads/writes use current auth, permissions and version; erro
  role='owner';
  for(const volume of [null,0,-1,'12',1.2345,1000000])assert.equal((await req('office.work_volume_set',{...input,volume})).status,400);
  assert.equal(calls,0);assert.equal((await req('office.work_volume_set',input)).status,200);assert.equal(args.p_volume,12.345);assert.equal(args.p_actor,owner);
+ fail={code:'PT409',message:'Оновіть заявку.'};assert.equal((await req('office.work_volume_set',input)).status,409);
  fail={code:'P2002',message:'Обсяг має відповідати результату виконавця.'};assert.equal((await req('office.work_volume_set',input)).status,409);
  fail={code:'XX000',message:'private database details'};const r=await req('office.work_volume_set',input);assert.equal(r.status,500);assert.doesNotMatch(await r.text(),/private database/);
 });
