@@ -17,8 +17,8 @@ export async function officeWorkVolume(db: any, body: any, admin: {user_id: stri
     });
     if (r.error) {
       const code = r.error.code;
-      throw new PortalError(code === '42501' ? 403 : ['40001','P2002'].includes(code) ? 409 : code === 'P2001' ? 400 : 500,
-        ['42501','40001','P2001','P2002'].includes(code) ? r.error.message : 'Не вдалося зберегти обсяг.');
+      throw new PortalError(code === '42501' ? 403 : ['PT409','40001','P2002'].includes(code) ? 409 : code === 'P2001' ? 400 : 500,
+        ['42501','PT409','40001','P2001','P2002'].includes(code) ? r.error.message : 'Не вдалося зберегти обсяг.');
     }
     return r.data;
   }

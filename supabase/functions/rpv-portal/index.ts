@@ -26,7 +26,7 @@ function result<T>(r: { data: T; error: unknown }): T {
   if (r.error) {
     const code=(r.error as any)?.code;
     if(["P2001","P2002"].includes(code)) throw new PortalError(code==="P2001"?400:409,(r.error as any).message);
-    if(code==="40001") throw new PortalError(409,"Заявка змінилася або дія зараз недоступна. Оновіть список.");
+    if(["PT409","40001"].includes(code)) throw new PortalError(409,"Заявка змінилася або дія зараз недоступна. Оновіть список.");
     if(code==="42501") throw new PortalError(403,"Недостатньо прав для цієї дії.");
     if(code==="22023") throw new PortalError(400,"Перевірте етап роботи, дату, обсяг та причину.");
     console.error("Portal database request failed");
