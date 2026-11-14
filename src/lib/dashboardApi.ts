@@ -1,3 +1,4 @@
+import {fetchFinanceReport} from './financeApi';
 import { supabase } from '@/lib/supabase';
 import { normalizeStatus } from '@/utils/helpers';
 import type { ApplicationStatus } from '@/types';
@@ -45,13 +46,14 @@ function buildName(c: { first_name: string | null; last_name: string | null } | 
 }
 
 export async function fetchDashboardStats(): Promise<{ stats: DashboardStats; recent: RecentApplication[] }> {
-  const [appResult, actResult, contractorResult] = await Promise.all([
+  const [appResult, actResult, contractorResult,finance] = await Promise.all([
     supabase.from('applications').select(`
       id, application_number, title, address, status, payout_amount, payout_status, created_at,
       contractor_id, contractor:contractors ( first_name, last_name )
     `).order('created_at', { ascending: false }),
     supabase.from('acts').select('status'),
     supabase.from('contractors').select('status'),
+    fetchFinanceReport(),
   ]);
 
   if (appResult.error) throw new Error(`Не вдалося завантажити заявки: ${appResult.error.message}`);
@@ -73,22 +75,16 @@ export async function fetchDashboardStats(): Promise<{ stats: DashboardStats; re
 
   for (const row of rows) {
     const ns = normalizeStatus(row.status);
-    const amount = Number(row.payout_amount) ?? 0;
-    stats.totalPayout += amount;
+
     if (ns === 'Нова') stats.newCount++;
     if (ns === 'Прийнята') stats.accepted++;
     if (ns === 'В роботі') stats.inProgress++;
     if (ns === 'Виконана') stats.completed++;
   }
 
-  for (const row of rows) {
-    if ((row as unknown as { payout_status?: string }).payout_status === 'pending') {
-      stats.pendingPayout += Number((row as unknown as { payout_amount?: number }).payout_amount) ?? 0;
-    }
-    if ((row as unknown as { payout_status?: string }).payout_status === 'paid') {
-      stats.paidPayout += Number((row as unknown as { payout_amount?: number }).payout_amount) ?? 0;
-    }
-  }
+  stats.totalPayout=finance.stats.accrued_total;
+  stats.pendingPayout=finance.stats.debt_total;
+  stats.paidPayout=finance.stats.paid_total;
 
   const actRows = (actResult.data ?? []) as unknown as { status: string }[];
   stats.pendingActs = actRows.filter(a => a.status === 'pending').length;

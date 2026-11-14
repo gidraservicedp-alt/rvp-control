@@ -106,7 +106,7 @@ function mapRowToApplication(row: ApplicationRow): Application {
     managerComment: row.manager_comment ?? '',
     actualVolume: Number(row.actual_volume ?? 0),
     unitPrice: Number(row.unit_price ?? 0),
-    payoutAmount: Number(row.payout_amount ?? 0),
+    payoutAmount: Number(row.payout_amount)|| (row.payout_status!=='paid'?Math.round(Number(row.actual_volume)*Number(row.unit_price)*100)/100:0)||0,
     payoutStatus: normalizePayoutStatus(row.payout_status),
     payoutReceipt: row.payout_receipt_file_id ?? undefined,
     payoutReceiptName: row.payout_receipt_name ?? undefined,

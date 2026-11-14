@@ -1,3 +1,4 @@
+import {fetchFinanceReport} from './financeApi';
 import { supabase } from '@/lib/supabase';
 import { normalizeStatus } from '@/utils/helpers';
 
@@ -205,106 +206,8 @@ export async function fetchStatistics(): Promise<{
   // MONTHLY PAYOUTS
   // =====================================================
 
-  const monthlyMap =
-    new Map<
-      string,
-      {
-        виплачено: number;
-        очікує: number;
-      }
-    >();
-
-  const monthNames = [
-    'Січ',
-    'Лют',
-    'Бер',
-    'Кві',
-    'Тра',
-    'Чер',
-    'Лип',
-    'Сер',
-    'Вер',
-    'Жов',
-    'Лис',
-    'Гру',
-  ];
-
-  for (const row of rows) {
-    const monthKey =
-      row.created_at?.slice(
-        0,
-        7,
-      );
-
-    if (!monthKey) {
-      continue;
-    }
-
-    const monthIdx =
-      parseInt(
-        monthKey.slice(
-          5,
-          7,
-        ),
-        10,
-      ) - 1;
-
-    const label =
-      `${
-        monthNames[
-          monthIdx
-        ] ?? monthKey
-      } ${monthKey.slice(
-        2,
-        4,
-      )}`;
-
-    const entry =
-      monthlyMap.get(
-        label,
-      ) ?? {
-        виплачено: 0,
-        очікує: 0,
-      };
-
-    const amount =
-      Number(
-        row.payout_amount ??
-          0,
-      );
-
-    if (
-      row.payout_status ===
-      'paid'
-    ) {
-      entry.виплачено +=
-        amount;
-    }
-
-    if (
-      row.payout_status ===
-      'pending'
-    ) {
-      entry.очікує +=
-        amount;
-    }
-
-    monthlyMap.set(
-      label,
-      entry,
-    );
-  }
-
-  const monthlyPayouts:
-    MonthlyPayout[] =
-    Array.from(
-      monthlyMap.entries(),
-    ).map(
-      ([month, value]) => ({
-        month,
-        ...value,
-      }),
-    );
+  const finance=await fetchFinanceReport();
+  const monthlyPayouts: MonthlyPayout[]=finance.monthly.map(m=>({month:m.month,виплачено:m.paid,очікує:m.debt}));
 
   // =====================================================
   // TOP CONTRACTORS
@@ -347,16 +250,7 @@ export async function fetchStatistics(): Promise<{
       entry.виконано++;
     }
 
-    if (
-      row.payout_status ===
-      'paid'
-    ) {
-      entry.виплачено +=
-        Number(
-          row.payout_amount ??
-            0,
-        );
-    }
+    entry.виплачено=finance.contractors.find(c=>c.contractor_id===row.contractor_id)?.paid||0;
 
     contractorMap.set(
       row.contractor_id,
