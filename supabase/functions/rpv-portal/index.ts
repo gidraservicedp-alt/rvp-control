@@ -1,4 +1,5 @@
 import { officeWorkVolume, validWorkVolume } from './work_volume.ts';
+import { officeOwnerEdit } from './owner_edit.ts';
 import { officeCreateApplication } from './office_create.ts';
 import { officeFinance } from './finance.ts';
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
@@ -110,6 +111,9 @@ async function visibleSite(user: number, id: string) {
   return s;
 }
 async function dispatch(req: Request, b: any): Promise<any> {
+  if (['office.permissions', 'office.order_edit', 'office.order_edit_save'].includes(b.action)) {
+    return officeOwnerEdit(db, b, await office(req, false));
+  }
   if (['office.work_volume','office.work_volume_set'].includes(b.action)) {
     return officeWorkVolume(db,b,await office(req,b.action==='office.work_volume_set'));
   }
