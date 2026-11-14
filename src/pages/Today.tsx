@@ -1,3 +1,4 @@
+import { formatWorkVolume } from '@/workspace/workVolume';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -293,6 +294,7 @@ export default function Today({
                     >
                       {item.app.customer}
                     </button>
+                    <p className="text-xl font-bold text-sky-300">{formatWorkVolume(item.app.actualVolume)}</p>
                     <p>{item.app.address}</p>
                     <small>
                       {item.app.contractorName &&
