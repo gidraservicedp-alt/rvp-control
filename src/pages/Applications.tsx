@@ -848,7 +848,7 @@ export default function Applications({
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="font-mono text-lg font-bold tracking-tight text-blue-400">
-                          {app.number}
+                          <bdi className="rpv-application-number">{app.number}</bdi>
                         </span>
                         <span className="rounded-md bg-white/[0.04] px-2 py-0.5 text-[11px] text-slate-500">
                           {formatDate(app.date)}
@@ -1089,7 +1089,7 @@ export default function Applications({
 
                         <td className="px-4 py-3">
                           <span className="font-mono text-xs text-blue-400">
-                            {app.number}
+                            <bdi className="rpv-application-number">{app.number}</bdi>
                           </span>
                         </td>
 

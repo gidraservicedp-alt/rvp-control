@@ -94,7 +94,7 @@ export default function Problems({ onNavigateToApplications }: Props) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-sm font-semibold text-red-400">{item.application_number || '—'}</span>
+                      <span className="font-mono text-sm font-semibold text-red-400"><bdi className="rpv-application-number">{item.application_number || '—'}</bdi></span>
                       <span className="rounded-full bg-red-500/10 px-2 py-1 text-[10px] font-medium text-red-400">ПРОБЛЕМА</span>
                     </div>
                     <h3 className="mt-2 text-base font-semibold text-white">{item.title || 'Заявка'}</h3>

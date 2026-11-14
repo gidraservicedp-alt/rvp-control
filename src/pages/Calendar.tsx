@@ -434,7 +434,7 @@ export default function Calendar({
               }
             `}
           >
-            {event.number}
+            <bdi className="rpv-application-number">{event.number}</bdi>
           </div>
         ) : (
           <div className="flex items-center gap-3">
@@ -444,7 +444,7 @@ export default function Calendar({
               <div className="flex flex-wrap items-center gap-2">
 
                 <span className="font-mono text-xs font-semibold text-blue-400">
-                  {event.number}
+                  <bdi className="rpv-application-number">{event.number}</bdi>
                 </span>
 
                 <span

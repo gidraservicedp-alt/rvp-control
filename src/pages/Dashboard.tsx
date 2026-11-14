@@ -1045,7 +1045,7 @@ export default function Dashboard({
                     >
                       <td className="px-5 py-4">
                         <span className="font-mono text-xs font-medium text-blue-400">
-                          {app.number}
+                          <bdi className="rpv-application-number">{app.number}</bdi>
                         </span>
                       </td>
 
