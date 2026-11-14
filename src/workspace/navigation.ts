@@ -37,6 +37,7 @@ export const navigationGroups: {
     label: "Документи та розрахунки",
     items: [
       { id: "acts", label: "Первинні акти", icon: ClipboardCheck },
+      { id: "rpv-reports", label: "РПВ та звіти", icon: BarChart3 },
       { id: "payouts", label: "Виплати", icon: Wallet },
       { id: "finance", label: "Фінанси", icon: BarChart3 },
     ],
@@ -73,6 +74,8 @@ export type WorkspaceRoute = {
   site?: string;
   record?: string;
   network?: string;
+  region?: string;
+  month?: string;
 };
 const pageIds = new Set<string>([
   ...navigationGroups.flatMap((g) => g.items.map((i) => i.id)),
@@ -89,11 +92,13 @@ export function readRoute(search: string): WorkspaceRoute {
     site: p.get("site") || undefined,
     record: p.get("record") || undefined,
     network: p.get("network") || undefined,
+    region: p.get("region") || undefined,
+    month: p.get("month") || undefined,
   };
 }
 export function routeSearch(route: WorkspaceRoute): string {
   const p = new URLSearchParams({ page: route.page });
-  for (const key of ["application", "site", "record", "network"] as const)
+  for (const key of ["application", "site", "record", "network", "region", "month"] as const)
     if (route[key]) p.set(key, route[key]!);
   return `?${p}`;
 }

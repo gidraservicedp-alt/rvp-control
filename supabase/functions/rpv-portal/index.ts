@@ -3,6 +3,7 @@ import { PortalError, verifyTelegram, monthRange, uuid } from "./auth.ts";
 import { notifyPublished, notifyContact } from "./notifications.ts";
 import { ukraineCities } from "./ukraine_cities.ts";
 import { officeSiteHistory, resolveOfficeSite } from "./site_history.ts";
+import { officeVolumeReport } from "./volume_report.ts";
 
 const URL = Deno.env.get("SUPABASE_URL")!;
 const KEY =
@@ -108,10 +109,11 @@ async function dispatch(req: Request, b: any): Promise<any> {
   if (String(b.action || "").startsWith("office.")) {
     const admin = await office(
       req,
-      !["office.list", "office.site", "office.site_history", "office.sites", "office.networks", "office.applications"].includes(
+      !["office.list", "office.site", "office.site_history", "office.sites", "office.networks", "office.applications", "office.volume"].includes(
         b.action,
       ),
     );
+    if (b.action === "office.volume") return await officeVolumeReport(db, b);
     if (b.action === "office.site_history") {
       const history = await officeSiteHistory(db, uuid(b.site), page(b.page));
       return { ...history, site: site(history.site) };

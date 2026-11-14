@@ -1,6 +1,7 @@
 // Development-only synthetic browser scenario. Not imported by the production entry.
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { volumeFixture } from './volume-fixture';
 const sid = "40000000-0000-0000-0000-000000000001";
 const site = {
   id: sid,
@@ -92,6 +93,7 @@ if(qaParams.get('fixture') === 'office-act') {
   acts[0].act_number='A-DEMO00B478F6509F4DB5';
 }
 let simulateReviewFailure=qaParams.get('reviewFailure') === '1';
+let simulateVolumeFailure=qaParams.get('volumeFailure') === '1';
 const primaryFiles = [{id:'70000000-0000-0000-0000-000000000001',act_id:acts[0].id,
  application_id:apps[3].id,storage_path:`${apps[3].id}/act/demo.pdf`,
  telegram_file_id:null,file_type:'document',file_name:'Первинний акт.pdf',category:'act',created_at:date()}];
@@ -135,6 +137,10 @@ window.fetch = async (input, init) => {
   }
   if (url.pathname.endsWith("/rpv-portal")) {
     const b = JSON.parse(String(init?.body));
+    if (b.action === 'office.volume') {
+      if(simulateVolumeFailure){simulateVolumeFailure=false;return Response.json({error:'Не вдалося завантажити лічильник РПВ. Спробуйте ще раз.'},{status:500});}
+      return json(volumeFixture(b));
+    }
     if (b.action === "office.networks")
       return json({ networks: ["UPG", "WOG"] });
     if (b.action === "office.site")

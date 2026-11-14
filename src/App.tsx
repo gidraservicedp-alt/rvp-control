@@ -10,6 +10,7 @@ import MobileNav from '@/components/MobileNav';
 import NewApplicationModal from '@/components/NewApplicationModal';
 import ApplicationWorkspace from '@/workspace/ApplicationWorkspace';
 import ObjectProfile from '@/workspace/ObjectProfile';
+import RPVCounter from '@/workspace/RPVCounter';
 import { readRoute, routeSearch, pageLabel, type WorkspaceRoute } from '@/workspace/navigation';
 
 import Today from '@/pages/Today';
@@ -311,6 +312,7 @@ function App() {
       case 'acts': return <Acts initialId={route.record} onRecordClose={closeRecord} />;
       case 'payouts': return <Payouts focusedApplication={route.record} onClearFocus={closeRecord} />;
       case 'statistics': return <Statistics />;
+      case 'rpv-reports': return <div className="ws-page"><div className="ws-heading"><div><p className="ws-eyebrow">ОБСЯГИ ТА ІСТОРІЯ</p><h1>РПВ та звіти</h1><p>За мережею, регіоном або окремою АЗК.</p></div></div><RPVCounter /></div>;
       case 'administrators': return <Administrators />;
       case 'audit-log': return <AuditLog />;
       case 'notifications': return <Notifications onNavigateToApplications={() => navigateTo('applications')} onNavigateToActs={() => navigateTo('acts')} onNavigateToPayouts={() => navigateTo('payouts')} />;

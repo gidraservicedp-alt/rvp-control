@@ -10,6 +10,7 @@ export type PageId =
   | 'acts'
   | 'payouts'
   | 'statistics'
+  | 'rpv-reports'
   | 'administrators'
   | 'audit-log'
   | 'notifications'
@@ -24,25 +25,25 @@ export type PageId =
   | 'archive';
 
 const FULL_ACCESS: PageId[] = [
-  'today', 'dashboard', 'applications', 'contractors', 'customers', 'objects', 'acts', 'payouts', 'statistics',
+  'today', 'rpv-reports', 'dashboard', 'applications', 'contractors', 'customers', 'objects', 'acts', 'payouts', 'statistics',
   'administrators', 'audit-log', 'notifications', 'settings', 'problems',
   'object-map', 'control-center', 'contractor-rating', 'calendar', 'finance',
   'automation', 'archive',
 ];
 
 const DISPATCHER_ACCESS: PageId[] = [
-  'today', 'dashboard', 'applications', 'contractors', 'customers', 'objects', 'acts', 'problems',
+  'today', 'rpv-reports', 'dashboard', 'applications', 'contractors', 'customers', 'objects', 'acts', 'problems',
   'object-map', 'control-center', 'contractor-rating', 'calendar', 'archive',
   'notifications', 'settings',
 ];
 
 const ACCOUNTANT_ACCESS: PageId[] = [
-  'today', 'dashboard', 'payouts', 'finance', 'statistics', 'applications',
+  'today', 'rpv-reports', 'dashboard', 'payouts', 'finance', 'statistics', 'applications',
   'acts', 'audit-log', 'notifications', 'settings', 'archive',
 ];
 
 const VIEWER_ACCESS: PageId[] = [
-  'today', 'dashboard', 'applications', 'contractors', 'customers', 'objects', 'acts', 'payouts',
+  'today', 'rpv-reports', 'dashboard', 'applications', 'contractors', 'customers', 'objects', 'acts', 'payouts',
   'statistics', 'problems', 'object-map', 'control-center',
   'contractor-rating', 'calendar', 'archive', 'notifications', 'settings',
 ];

@@ -5,6 +5,7 @@ import { SitePassport } from "@/portal/CustomerDetails";
 import { Pager } from "@/portal/Portal";
 import { formatDate, actStatusLabel } from "@/utils/helpers";
 import type { HistoryApplication } from "../../supabase/functions/rpv-portal/site_history";
+import RPVCounter from './RPVCounter';
 
 type ObjectHistory = { site: Site; applications: HistoryApplication[]; total: number; more: boolean };
 export default function ObjectProfile({ id, onBack, onOpenApplication, onOpenAct }: {
@@ -36,6 +37,7 @@ export default function ObjectProfile({ id, onBack, onOpenApplication, onOpenAct
     {!history && <><button className="rpv-back" onClick={onBack}>До списку об’єктів</button>{loading && <p role="status">Завантажуємо паспорт…</p>}</>}
     {history && <>
       <SitePassport site={history.site} onBack={onBack} />
+      <RPVCounter key={history.site.id} fixedSite={history.site.id} compact />
       <section className="ws-passport-apps" aria-labelledby="object-history-title">
         <div className="ws-section-label">
           <h2 id="object-history-title">Історія заявок · {history.total}</h2>

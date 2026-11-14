@@ -16,6 +16,7 @@ import type { Application } from "@/types";
 import type { PageId } from "@/lib/permissions";
 import { formatCurrency, formatDateTime } from "@/utils/helpers";
 import { fetchOperations } from "@/workspace/operationsApi";
+import RPVCounter from "@/workspace/RPVCounter";
 import {
   buildWorkItems,
   isAttentionItem,
@@ -178,6 +179,7 @@ export default function Today({
           </button>
         </div>
       </section>
+      <RPVCounter compact />
       <div className="ws-section-label">
         <h2>Робочий цикл</h2>
         <span>Оберіть крок, щоб побачити заявки</span>

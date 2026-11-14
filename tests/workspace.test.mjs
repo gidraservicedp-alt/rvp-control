@@ -111,7 +111,11 @@ test("Object context and open application survive URL round trip; unknown pages 
   assert.deepEqual(readRoute(routeSearch(route)), {
     ...route,
     record: undefined,
+    region: undefined,
+    month: undefined,
   });
+  const report = { page:'rpv-reports', network:'WOG', region:'UA12', month:'2026-10', site:'s-1' };
+  assert.deepEqual(readRoute(routeSearch(report)),{...report,application:undefined,record:undefined});
   assert.equal(readRoute("?page=unknown").page, "today");
   const ids = navigationGroups.flatMap((g) => g.items.map((i) => i.id));
   assert.equal(new Set(ids).size, ids.length);
