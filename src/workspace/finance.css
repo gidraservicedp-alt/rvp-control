@@ -1,0 +1,275 @@
+.ws-fin {
+  color: #d5eaff;
+}
+.ws-fin-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+.ws-fin-title h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 650;
+}
+.ws-fin-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  border: 0;
+  padding: 0;
+  margin: 20px 0;
+}
+.ws-fin label,
+.ws-fin-dialog label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  color: #9cb9d0;
+}
+.ws-fin select,
+.ws-fin input,
+.ws-fin-dialog input,
+.ws-fin-dialog select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid #31536c;
+  border-radius: 12px;
+  background: #0b2136;
+  color: #e0f1ff;
+  font-size: 15px;
+}
+.ws-fin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.ws-fin-stats article {
+  padding: 18px;
+  border: 1px solid #294c66;
+  border-radius: 18px;
+  background: #0d2940;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ws-fin-stats span,
+.ws-fin-note {
+  font-size: 13px;
+  color: #9eb9cd;
+}
+.ws-fin-stats strong {
+  font-size: 25px;
+  color: #8dddff;
+  overflow-wrap: anywhere;
+}
+.ws-fin-stats .ws-fin-debt {
+  border-color: #996335;
+}
+.ws-fin-stats small {
+  font-size: 12px;
+  color: #ffc58c;
+}
+.ws-fin-note {
+  margin: 12px 0;
+  line-height: 1.6;
+}
+.ws-fin-warning {
+  border: 1px solid #986437;
+  background: #352819;
+  padding: 16px;
+  border-radius: 14px;
+  color: #ffd1a0;
+  margin: 16px 0;
+}
+.ws-fin-warning p {
+  font-size: 13px;
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+.ws-fin-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0;
+}
+.ws-fin-contractors {
+  border: 1px solid #294c66;
+  border-radius: 16px;
+  padding: 18px;
+  margin: 22px 0;
+  background: #0d2940;
+}
+.ws-fin h3 {
+  font-size: 17px;
+  font-weight: 650;
+}
+.ws-fin-contractors > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 13px 0;
+  border-bottom: 1px solid #294c66;
+}
+.ws-fin-contractors small {
+  display: block;
+  color: #98b4cb;
+  font-size: 12px;
+  margin-top: 5px;
+}
+.ws-fin a {
+  color: #8ed5ff;
+}
+.ws-fin-list-title {
+  margin-top: 22px;
+}
+.ws-fin-entry {
+  border: 1px solid #2a4b64;
+  border-radius: 16px;
+  background: #0d253a;
+  padding: 18px;
+  margin: 12px 0;
+}
+.ws-fin-entry-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ws-fin-entry-head > a {
+  font-family: monospace;
+  font-weight: 650;
+}
+.ws-fin-entry h4 {
+  font-size: 17px;
+  margin: 12px 0 5px;
+}
+.ws-fin-entry > p {
+  font-size: 13px;
+  color: #96b5ce;
+}
+.ws-fin-entry dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+.ws-fin-entry dt {
+  font-size: 12px;
+  color: #96b5ce;
+}
+.ws-fin-entry dd {
+  margin-top: 6px;
+  font-size: 15px;
+}
+.ws-fin-entry-actions {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.ws-fin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 240;
+  background: #020c17d9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #d5eaff;
+}
+.ws-fin-dialog {
+  width: 100%;
+  max-width: 620px;
+  max-height: 90dvh;
+  overflow: auto;
+  border: 1px solid #31536c;
+  border-radius: 20px;
+  background: #0b2034;
+}
+.ws-fin-dialog header,
+.ws-fin-dialog footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 18px;
+  border-bottom: 1px solid #31536c;
+}
+.ws-fin-dialog footer {
+  border-top: 1px solid #31536c;
+  border-bottom: 0;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  position: sticky;
+  bottom: 0;
+  background: #0b2034;
+}
+.ws-fin-dialog header h2 {
+  font-size: 18px;
+  font-weight: 650;
+}
+.ws-fin-dialog header button {
+  min-height: 44px;
+  min-width: 44px;
+}
+.ws-fin-body {
+  padding: 18px;
+  display: grid;
+  gap: 18px;
+}
+.ws-fin-confirm-amount {
+  font-size: 30px;
+  color: #8dddff;
+}
+.ws-fin-event {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #31536c;
+}
+.ws-fin-event time,
+.ws-fin-event small {
+  font-size: 12px;
+  color: #98b4cb;
+}
+.ws-fin button:focus-visible,
+.ws-fin-dialog button:focus-visible {
+  outline: 2px solid #77d3ff;
+  outline-offset: 3px;
+}
+@media (max-width: 640px) {
+  .ws-fin-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ws-fin-filters label:first-of-type {
+    grid-column: 1/-1;
+  }
+  .ws-fin-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ws-fin-stats article {
+    padding: 14px;
+  }
+  .ws-fin-stats strong {
+    font-size: 23px;
+  }
+  .ws-fin-entry dl {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ws-fin-entry-actions > .ws-button {
+    flex: 1 1 auto;
+  }
+  .ws-fin-modal {
+    padding: 10px;
+  }
+  .ws-fin-title h2 {
+    font-size: 18px;
+  }
+}
