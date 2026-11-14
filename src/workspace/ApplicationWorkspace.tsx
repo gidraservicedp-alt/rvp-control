@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Building2, ClipboardCheck, Wallet, X } from "lucide-react";
+import { Building2, ClipboardCheck, ShieldCheck, Wallet, X } from "lucide-react";
+import { portal } from '@/portal/api';
+import OwnerOrderEditor from './OwnerOrderEditor';
 import ApplicationActionDrawer from "@/components/ApplicationActionDrawer";
 import {
   fetchApplication,
@@ -24,6 +26,14 @@ export default function ApplicationWorkspace({
     [acts, setActs] = useState<LinkedAct[]>([]),
     [error, setError] = useState("");
   const active = useRef(true);
+  const [canEdit, setCanEdit] = useState(false), [editing, setEditing] = useState(false);
+  useEffect(() => {
+    let current = true;
+    portal<{permissions: string[]}>('office.permissions').then(r => {
+      if (current) setCanEdit(r.permissions.includes('applications.edit_any_stage'));
+    }).catch(() => {if (current) setCanEdit(false);});
+    return () => {current = false;};
+  }, [id]);
   const load = useCallback(async () => {
     try {
       const [row, docs] = await Promise.all([
@@ -51,7 +61,7 @@ export default function ApplicationWorkspace({
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const escape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !editing) onClose();
     };
     document.addEventListener("keydown", escape);
     return () => {
@@ -59,7 +69,8 @@ export default function ApplicationWorkspace({
       document.removeEventListener("keydown", escape);
       previous?.focus();
     };
-  }, [onClose]);
+  }, [onClose, editing]);
+  if (editing) return <OwnerOrderEditor id={id} onClose={() => setEditing(false)} onSaved={async () => {await load(); setEditing(false);}}/>;
   if (!app)
     return (
       <div
@@ -101,6 +112,7 @@ export default function ApplicationWorkspace({
       }
       relatedActions={
         <div className="ws-related">
+          {canEdit && <button onClick={() => setEditing(true)}><ShieldCheck size={15}/>Редагувати заявку</button>}
           {app.customerSiteId && (
             <button onClick={() => onOpenSite(app.customerSiteId!)}>
               <Building2 size={15} /> Паспорт об’єкта

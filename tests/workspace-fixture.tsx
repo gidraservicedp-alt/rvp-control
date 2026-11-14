@@ -79,6 +79,11 @@ const acts = [
   },
 ];
 const qaParams = new URLSearchParams(location.search);
+const officeRole = qaParams.get('role') || 'owner';
+const editEvents: any[] = [];
+let ownerSaveFailure = qaParams.get('editFailure') === '1';
+let ownerEditVersion = 'a'.repeat(32);
+if (qaParams.get('paid') === '1') apps[6].payout_status = 'paid';
 if (qaParams.get('fixture') === 'object-history') {
   apps[4].customer_site_id=other.id;apps[4].title=other.label;
   acts.length=0;
@@ -140,6 +145,25 @@ window.fetch = async (input, init) => {
   }
   if (url.pathname.endsWith("/rpv-portal")) {
     const b = JSON.parse(String(init?.body));
+    if (b.action === 'office.permissions') return json({permissions:officeRole==='owner'?['applications.edit_any_stage']:[]});
+    if (b.action === 'office.order_edit' || b.action === 'office.order_edit_save') {
+      if(officeRole!=='owner') return Response.json({error:'Лише головний адміністратор.'},{status:403});
+      const a=apps.find(x=>x.id===b.application)!;
+      if(b.action.endsWith('_save')) {
+        if(ownerSaveFailure) {ownerSaveFailure=false;return Response.json({error:'Тестова помилка збереження. Спробуйте ще раз.'},{status:500});}
+        if(b.version!==ownerEditVersion)return Response.json({error:'Заявка змінилася. Оновіть дані.'},{status:409});
+        const changes=Object.fromEntries(Object.entries(b.patch).map(([key,value])=>[key,{before:(a as any)[key]??null,after:value}]));
+        const beforeTitle=a.title;
+        Object.assign(a,b.patch,{updated_at:date()});
+        const target=[site,other].find(s=>s.id===a.customer_site_id)!;
+        Object.assign(a,{title:target.label,address:target.address});
+        editEvents.unshift({id:b.request,application_id:a.id,event_type:'owner_order_edited',title:'Заявку відредагував головний адміністратор',
+          description:b.reason,actor_name:'Головний адміністратор',created_at:date(),metadata:{changes,before_title:beforeTitle,after_title:a.title}});
+        ownerEditVersion='b'.repeat(32);
+        return json({ok:true,changed:true,revision:b.request});
+      }
+      return json({application:a,version:ownerEditVersion,work_date:a.status==='completed'?date().slice(0,10):null});
+    }
     if (b.action === 'office.create_application') {
       const target=[site,other].find(s=>s.id===b.site);
       if(!target)return Response.json({error:'Оберіть паспорт зі списку.'},{status:409});
@@ -197,6 +221,7 @@ window.fetch = async (input, init) => {
     const table = url.pathname.split("/").pop(),
       select = url.searchParams.get("select") || "";
     let rows: any[] =
+      table === 'application_events' ? editEvents :
       table === 'application_files' || table === 'act_files' ? [...primaryFiles] :
       table === "applications"
         ? [...apps]
@@ -215,7 +240,7 @@ window.fetch = async (input, init) => {
                 },
               ]
             : table === "admin_users"
-              ? [{ user_id: "local-fixture", role: "owner", is_active: true }]
+              ? [{ user_id: "local-fixture", role: officeRole, is_active: true }]
               : [];
     for (const [key, value] of url.searchParams)
       if (value.startsWith("eq."))
