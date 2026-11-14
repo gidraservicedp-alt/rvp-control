@@ -7,6 +7,7 @@ export function makeServiceWorkflow(d: any) {
   async function say(chat: number,text: string,markup?: any) { return send('sendMessage',{chat_id:chat,text,parse_mode:'HTML',...(markup?{reply_markup:markup}:{})}); }
   async function rpc(name: string,args: any) {
     const r = await db.rpc(name,args);
+    if(r.error?.code==='P2001'||r.error?.code==='P2002') throw new Error(r.error.message);
     if(r.error) throw new Error(['42501','40001'].includes(r.error.code)?'Заявка змінилася або недоступна. Відкрийте її знову.':'Перевірте етап, дату та обсяг. Якщо проблему не вирішено — зверніться до офісу.');
     return r.data;
   }
@@ -30,18 +31,18 @@ export function makeServiceWorkflow(d: any) {
     rows.push([{text:'📋 Мої заявки',callback_data:'contractorappslist'}]);
     const report=await db.from('rpv_service_reports').select('state,review_reason').eq('application_id',id).maybeSingle();
     let stage=a.awaiting_act?'Результат на перевірці':a.status==='completed'?'Роботу підтверджено':a.status==='cancelled'?'Скасовано':a.arrived_at?'На об’єкті':a.contractor_stage==='departed'?'В дорозі':a.contractor_stage==='offered'?'Очікує вашого рішення':'Прийнято';
-    await say(chat,`📋 <b>${safe(a.application_number)}</b>\n🏢 ${safe(a.title)}\n📍 ${safe(a.address)}\n🔧 ${safe(a.description)}\n\n${safe(stage)}${report.data?.review_reason?`\n❗ Повернуто: ${safe(report.data.review_reason)}`:''}${a.has_problem?`\n⚠️ ${safe(a.problem_comment)}`:''}\n💰 ${Number(a.payout_amount)>0?`${Number(a.payout_amount).toLocaleString('uk-UA')} грн`:'Суму уточнюйте в офісі'}`,{inline_keyboard:rows});
+    await say(chat,`📋 <b>${safe(a.application_number)}</b>\n🏢 ${safe(a.title)}\n📍 ${safe(a.address)}\n💧 <b>${Number(a.actual_volume)>0?`${Number(a.actual_volume).toLocaleString('uk-UA',{maximumFractionDigits:3})} м³`:'Обсяг не вказано'}</b>\n🔧 ${safe(a.description)}\n\n${safe(stage)}${report.data?.review_reason?`\n❗ Повернуто: ${safe(report.data.review_reason)}`:''}${a.has_problem?`\n⚠️ ${safe(a.problem_comment)}`:''}\n💰 ${Number(a.payout_amount)>0?`${Number(a.payout_amount).toLocaleString('uk-UA')} грн`:'Суму уточнюйте в офісі'}`,{inline_keyboard:rows});
   }
   async function begin(chat:number,user:number,id:string) {
     const a=await own(user,id);
     if(!a.arrived_at || a.awaiting_act || ['completed','cancelled'].includes(a.status)) throw new Error('Спочатку відмітьте виїзд і прибуття. Переданий результат очікує перевірки офісом.');
-    const report=await db.from('rpv_service_reports').select('state').eq('application_id',id).maybeSingle();
+    const report=await db.from('rpv_service_reports').select('state,volume').eq('application_id',id).maybeSingle();
     if(report.error) throw new Error('Не вдалося перевірити результат. Спробуйте ще раз.');
-    if(report.data?.state==='draft') {
+    if(report.data?.state==='draft' && Number(report.data.volume)>0) {
       await setSession(user,`wf_upload:${id}`);await say(chat,'📎 Результат збережено. Надішліть фото або PDF акта (до 10 МБ).',keyboard('✏️ Змінити дані'));return;
     }
     await setSession(user,`wf_volume:${id}`);
-    await say(chat,'Вкажіть фактично відкачаний обсяг у м³ — тільки число. Для роботи без відкачки натисніть відповідну кнопку.',keyboard('Без відкачки'));
+    await say(chat,'Вкажіть фактично відкачаний обсяг у м³ — число більше 0, до 3 знаків після коми. Без обсягу заявку завершити неможливо.',keyboard('❌ Скасувати'));
   }
   async function callback(c:any) {
     const text=String(c.data||'');const user=c.from?.id,chat=c.message?.chat?.type==='private'?c.message.chat.id:user;
@@ -85,8 +86,8 @@ export function makeServiceWorkflow(d: any) {
         await resetSession(user);await say(chat,'Збережено. Офіс побачить причину у заявці.',mainMenu(user));return true;
       }
       if(step==='wf_volume') {
-        const value=text==='Без відкачки'?'none':text.replace(',','.');
-        if(value!=='none' && (!/^\d+(\.\d{1,3})?$/.test(value)||Number(value)<=0||Number(value)>=1000000)) throw new Error('Введіть додатне число, не більш ніж 3 знаки після коми.');
+        const value=text.replace(',','.');
+        if(!/^\d+(\.\d{1,3})?$/.test(value)||Number(value)<=0||Number(value)>=1000000) throw new Error('Введіть додатне число, не більш ніж 3 знаки після коми.');
         await setSession(user,`wf_date:${id}:${value}`);await say(chat,'Дата виконання: РРРР-ММ-ДД або «Сьогодні».',keyboard('Сьогодні'));return true;
       }
       if(step==='wf_date') {
@@ -95,12 +96,13 @@ export function makeServiceWorkflow(d: any) {
         await setSession(user,`wf_note:${id}:${vol}:${value}`);await say(chat,'Додайте примітку: кількість рейсів, особливості роботи. Або натисніть «Без примітки».',keyboard('Без примітки'));return true;
       }
       if(step==='wf_note') {
+        if(!/^\d+(\.\d{1,3})?$/.test(vol||'') || Number(vol)<=0 || Number(vol)>=1000000) {await setSession(user,`wf_volume:${id}`);throw new Error('Вкажіть фактичний обсяг у м³. Без кубів результат не приймається.');}
         if(!text||text.length>2000) throw new Error('Примітка має містити до 2000 символів.');
-        await rpc('rpv_service_report',{p_user:user,p_application:id,p_version:a.updated_at,p_date:date,p_volume:vol==='none'?null:Number(vol),p_notes:text==='Без примітки'?'':text});
+        await rpc('rpv_service_report',{p_user:user,p_application:id,p_version:a.updated_at,p_date:date,p_volume:Number(vol),p_notes:text==='Без примітки'?'':text});
         await setSession(user,`wf_upload:${id}`);await say(chat,'📎 Тепер надішліть фото або PDF акта (до 10 МБ). Результат буде передано офісу на перевірку.',keyboard('✏️ Змінити дані'));return true;
       }
       if(step==='wf_upload') {
-        if(text==='✏️ Змінити дані'&&!a.awaiting_act){await setSession(user,`wf_volume:${id}`);await say(chat,'Вкажіть фактичний обсяг у м³.',keyboard('Без відкачки'));return true;}
+        if(text==='✏️ Змінити дані'&&!a.awaiting_act){await setSession(user,`wf_volume:${id}`);await say(chat,'Вкажіть фактичний обсяг у м³.',keyboard('❌ Скасувати'));return true;}
         const photo=m.photo?.at(-1),doc=m.document,f=photo||doc;
         if(!f || f.file_size>10*1024*1024 || (doc && !['application/pdf','image/jpeg','image/png'].includes(doc.mime_type))) throw new Error('Потрібне фото, JPG, PNG або PDF до 10 МБ.');
         const r=await rpc('rpv_service_attach',{p_user:user,p_application:id,p_key:crypto.randomUUID(),p_file:f.file_id,p_type:photo?'photo':'document',p_name:String(doc?.file_name||'photo.jpg').slice(0,180)});
