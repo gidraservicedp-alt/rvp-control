@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  Plus, Phone, Send, BarChart2, CheckCircle, Wallet, X,
+  Plus, Phone, Send, BarChart2, CheckCircle, X,
   Trash2, Power, Loader2, AlertCircle, RefreshCw, Pencil, Hash, MapPin, Calendar, ShieldCheck,
 } from 'lucide-react';
+import FinanceWorkspace from '@/workspace/FinanceWorkspace';
 import StatusBadge from '@/components/StatusBadge';
 import PageHeader from '@/components/PageHeader';
 import NewContractorModal from '@/components/NewContractorModal';
@@ -38,20 +39,23 @@ function ContractorProfileModal({
 }) {
   const [apps, setApps] = useState<ContractorApplication[]>([]);
   const [loadingApps, setLoadingApps] = useState(true);
+  const [appsError,setAppsError]=useState('');
+  const [financeVersion,setFinanceVersion]=useState(0);
+  useEffect(()=>{const update=()=>setFinanceVersion(v=>v+1);window.addEventListener('rpv-finance-updated',update);return()=>window.removeEventListener('rpv-finance-updated',update);},[]);
 
   useEffect(() => {
+    setLoadingApps(true);setAppsError('');
     fetchContractorApplications(contractor.id)
       .then(setApps)
-      .catch(() => setApps([]))
+      .catch(e => setAppsError(e.message))
       .finally(() => setLoadingApps(false));
-  }, [contractor.id]);
+  }, [contractor.id,financeVersion]);
 
   const activeApps = apps.filter(a => {
     const s = normalizeStatus(a.status);
     return s !== 'Виконана' && s !== 'Скасована';
   }).length;
   const completedApps = apps.filter(a => normalizeStatus(a.status) === 'Виконана').length;
-  const totalPayoutFromApps = apps.reduce((sum, a) => sum + (a.payoutStatus === 'paid' ? a.payoutAmount : 0), 0);
 
   const modal = (
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
@@ -113,7 +117,7 @@ function ContractorProfileModal({
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="bg-white/[0.03] rounded-xl p-4 text-center">
               <BarChart2 size={18} className="text-blue-400 mx-auto mb-1" />
               <p className="text-xl font-bold text-white">{apps.length}</p>
@@ -129,12 +133,8 @@ function ContractorProfileModal({
               <p className="text-xl font-bold text-white">{completedApps}</p>
               <p className="text-xs text-slate-500">Виконано</p>
             </div>
-            <div className="bg-white/[0.03] rounded-xl p-4 text-center">
-              <Wallet size={18} className="text-violet-400 mx-auto mb-1" />
-              <p className="text-lg font-bold text-white">{formatCurrency(totalPayoutFromApps)}</p>
-              <p className="text-xs text-slate-500">Виплачено</p>
-            </div>
           </div>
+          <FinanceWorkspace contractor={contractor.id} compact />
 
           {/* Telegram admin access */}
           <div className="bg-white/[0.03] rounded-xl p-4 flex items-center justify-between gap-4">
@@ -208,7 +208,7 @@ function ContractorProfileModal({
                 <Loader2 size={16} className="animate-spin" />
                 <span className="text-sm">Завантаження заявок…</span>
               </div>
-            ) : apps.length === 0 ? (
+            ) : appsError ? (<p role="alert" className="text-red-400">{appsError}</p>) : apps.length === 0 ? (
               <p className="text-sm text-slate-500">Заявок немає</p>
             ) : (
               <div className="space-y-2">
@@ -217,11 +217,11 @@ function ContractorProfileModal({
                     <div>
                       <span className="font-mono text-xs text-blue-400">{app.number}</span>
                       <p className="text-sm text-slate-300 mt-0.5 truncate max-w-[250px]">{app.customer}</p>
-                      <p className="text-xs text-slate-500">{formatDate(app.date)}</p>
+                      <p className="text-xs text-slate-500">{formatDate(app.date)}</p>{app.status==='completed'&&<a className="text-xs text-sky-300" href={`?page=payouts&record=${app.id}`}>{app.payoutStatus==='paid'?'Виплачено · історія':'Не оплачено · розрахунок'}</a>}
                     </div>
                     <div className="text-right">
                       <StatusBadge label={normalizeStatus(app.status)} className={getApplicationStatusColor(normalizeStatus(app.status))} />
-                      <p className="text-sm font-medium text-slate-200 mt-1">{(app.amount ?? 0).toLocaleString('uk-UA')} ₴</p>
+                      <p className="text-sm font-medium text-slate-200 mt-1">{app.amountKnown?formatCurrency(app.amount):'Суму не вказано'}</p>
                     </div>
                   </div>
                 ))}
@@ -269,6 +269,8 @@ export default function Contractors({ initialId, onRecordClose }: { initialId?: 
   useEffect(() => {
     loadContractors();
   }, [loadContractors]);
+
+  useEffect(()=>{const update=()=>void loadContractors();window.addEventListener('rpv-finance-updated',update);return()=>window.removeEventListener('rpv-finance-updated',update);},[loadContractors]);
 
   const handleToggleFromRow = async (e: React.MouseEvent, c: ContractorListItem) => {
     e.stopPropagation();
@@ -419,6 +421,7 @@ export default function Contractors({ initialId, onRecordClose }: { initialId?: 
                         </div>
                       </div>
 
+                      <div className="mt-3 rounded-xl border border-sky-800 p-3"><p className="text-xs text-sky-200">Борг до виплати</p><b>{formatCurrency(c.debt)}</b><p className="text-xs text-orange-300">{c.pendingPayoutCount} не оплачені · {c.missingAmountCount} без суми</p></div>
                       <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
                         <div className="min-w-0">
                           <p className="truncate text-xs text-slate-500">{c.phone || 'Телефон не вказано'}</p>
@@ -444,7 +447,7 @@ export default function Contractors({ initialId, onRecordClose }: { initialId?: 
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/5 bg-white/[0.02]">
-                  {['ПІБ', 'Телефон', 'Telegram', 'Статус', 'Регіон', 'Заявок', 'Виконано', 'Сума виплат', 'Дії'].map(h => (
+                  {['ПІБ', 'Телефон', 'Telegram', 'Статус', 'Регіон', 'Заявок', 'Виконано', 'Виплачено / борг', 'Дії'].map(h => (
                     <th key={h} className="text-left text-xs text-slate-500 font-medium px-5 py-3 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -518,7 +521,7 @@ export default function Contractors({ initialId, onRecordClose }: { initialId?: 
                       </div>
                     </td>
                     <td className="px-5 py-4 text-slate-200 font-medium whitespace-nowrap">
-                      {(c.totalPayout ?? 0).toLocaleString('uk-UA')} ₴
+                      {formatCurrency(c.totalPayout)}<p className="text-sky-300">Борг: {formatCurrency(c.debt)}</p>{c.missingAmountCount>0&&<small className="text-orange-300">{c.missingAmountCount} без суми</small>}
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1">
