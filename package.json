@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "test:portal": "node --test tests/portal-auth.test.mjs tests/portal-bot.test.mjs tests/service-bot.test.mjs && node tests/portal-sql.test.mjs && node tests/customer-create.test.mjs && node tests/customer-calendar.test.mjs && node tests/service-workflow.test.mjs && node --test tests/workspace.test.mjs tests/application-files.test.mjs tests/primary-act.test.mjs tests/object-history.test.mjs tests/volume-report.test.mjs"
+    "test:portal": "node --test tests/portal-auth.test.mjs tests/portal-bot.test.mjs tests/service-bot.test.mjs && node tests/portal-sql.test.mjs && node tests/customer-create.test.mjs && node tests/customer-calendar.test.mjs && node tests/service-workflow.test.mjs && node --test tests/workspace.test.mjs tests/application-files.test.mjs tests/primary-act.test.mjs tests/object-history.test.mjs tests/volume-report.test.mjs tests/finance.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
