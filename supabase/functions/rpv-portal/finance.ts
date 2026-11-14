@@ -36,14 +36,14 @@ export async function officeFinance(
       throw new PortalError(
         e.code === "42501"
           ? 403
-          : e.code === "40001"
+          : ["PT409", "40001"].includes(e.code)
             ? 409
             : e.code === "P0002"
               ? 404
               : ["23514", "22023"].includes(e.code)
                 ? 400
                 : 500,
-        ["42501", "40001", "P0002", "23514", "22023"].includes(e.code)
+        ["42501", "PT409", "40001", "P0002", "23514", "22023"].includes(e.code)
           ? e.message
           : "Не вдалося зберегти виплату.",
       );

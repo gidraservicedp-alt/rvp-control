@@ -8,7 +8,7 @@ const fields = new Set(['customer_site_id', 'contractor_id', 'description', 'man
 function checked(result: any) {
   if (!result.error) return result.data;
   const {code, message} = result.error;
-  const status = code === '42501' ? 403 : code === '40001' ? 409 : code === 'P0002' ? 404 :
+  const status = code === '42501' ? 403 : ['PT409','40001'].includes(code) ? 409 : code === 'P0002' ? 404 :
     ['P2001', 'P2002', '23514', '22023', '22007', '22008', '22P02'].includes(code) ? 400 : 500;
   throw new PortalError(status, status === 500 ? 'Не вдалося зберегти зміни. Повторіть спробу.' :
     code?.startsWith('22') ? 'Перевірте формат даних заявки.' : message);
