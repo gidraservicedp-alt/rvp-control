@@ -8,7 +8,7 @@ export function makeServiceWorkflow(d: any) {
   async function rpc(name: string,args: any) {
     const r = await db.rpc(name,args);
     if(r.error?.code==='P2001'||r.error?.code==='P2002') throw new Error(r.error.message);
-    if(r.error) throw new Error(['42501','40001'].includes(r.error.code)?'Заявка змінилася або недоступна. Відкрийте її знову.':'Перевірте етап, дату та обсяг. Якщо проблему не вирішено — зверніться до офісу.');
+    if(r.error) throw new Error(['42501','PT409','40001'].includes(r.error.code)?'Заявка змінилася або недоступна. Відкрийте її знову.':'Перевірте етап, дату та обсяг. Якщо проблему не вирішено — зверніться до офісу.');
     return r.data;
   }
   async function own(user: number,id: string) {
