@@ -8,7 +8,7 @@ const selectCls = 'w-full min-w-0 bg-[#182332] border border-blue-300/20 rounded
 export default function ExistingSitePicker({value, onChange, error}: {
   value: Site | null; onChange: (site: Site | null) => void; error?: string;
 }) {
-  const [networks, setNetworks] = useState<string[]>([]), [network, setNetwork] = useState('');
+  const [networks, setNetworks] = useState<string[]>([]), [network, setNetwork] = useState(value?.passport_network || '');
   const [sites, setSites] = useState<Site[]>([]);
   const [loadingNetworks, setLoadingNetworks] = useState(true), [loadingSites, setLoadingSites] = useState(false);
   const [networkError, setNetworkError] = useState(''), [siteError, setSiteError] = useState('');

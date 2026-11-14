@@ -1,4 +1,5 @@
 import WorkVolumeEditor from '@/workspace/WorkVolumeEditor';
+import OrderEditChanges from '@/workspace/OrderEditChanges';
 import { formatWorkVolume, hasWorkVolume } from '@/workspace/workVolume';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
@@ -605,8 +606,9 @@ export default function ApplicationActionDrawer({ application, onClose, onChange
                         <p className="text-sm font-medium text-slate-200">{event.title}</p>
                         <span className="text-[10px] text-slate-600">{formatDateTime(event.createdAt)}</span>
                       </div>
-                      {event.description && <p className="mt-1 text-xs leading-5 text-slate-500">{event.description}</p>}
-                      <p className="mt-1 text-[10px] text-slate-700">{event.actorName || 'Система'}</p>
+                      {event.description && <p className="mt-1 text-xs leading-5 text-slate-300">{event.description}</p>}
+                      {event.eventType === 'owner_order_edited' && <OrderEditChanges metadata={event.metadata}/>}
+                      <p className="mt-1 text-[10px] text-slate-400">{event.actorName || 'Система'}</p>
                     </div>
                   </div>
                 ))}
