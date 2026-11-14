@@ -1,3 +1,5 @@
+import WorkVolumeEditor from '@/workspace/WorkVolumeEditor';
+import { formatWorkVolume, hasWorkVolume } from '@/workspace/workVolume';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AlertTriangle,
@@ -123,6 +125,9 @@ export default function ApplicationActionDrawer({ application, onClose, onChange
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [tab, setTab] = useState<'actions' | 'details' | 'media' | 'timeline'>('actions');
 
+  const [actualVolume, setActualVolume] = useState<number|null>(application.actualVolume);
+  useEffect(() => {setActualVolume(application.actualVolume);}, [application.id, application.actualVolume]);
+
   const isFinished = application.status === 'Виконана' || application.status === 'Скасована';
 
   const loadExtra = async () => {
@@ -208,6 +213,7 @@ export default function ApplicationActionDrawer({ application, onClose, onChange
   };
 
   const handleComplete = () => {
+    if(!hasWorkVolume(actualVolume)) {showToast('Вкажіть і збережіть фактичний обсяг у м³.', 'error');return;}
     void runAction('complete', () => completeApplicationWithAct(application.id), 'Акт прийнято. Заявку завершено');
   };
 
@@ -320,6 +326,7 @@ export default function ApplicationActionDrawer({ application, onClose, onChange
             </div>
             <h2 className="mt-1 truncate text-lg font-bold text-white">{application.customer}</h2>
             <p className="mt-1 line-clamp-2 text-xs text-slate-500">{application.address}</p>
+            <p className="mt-2 text-xl font-bold text-sky-300">{formatWorkVolume(actualVolume)}</p>
           </div>
           <button aria-label="Закрити заявку" onClick={onClose} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:text-white">
             <X size={19} />
@@ -352,12 +359,13 @@ export default function ApplicationActionDrawer({ application, onClose, onChange
            ) : tab === 'details' ? (
             <div className="space-y-6 text-sm text-slate-200">
               <section><h3 className="text-xs text-slate-400 mb-2">Роботи / потреба</h3><p className="whitespace-pre-wrap">{application.description || 'Опис не вказано'}</p></section>
-              <dl className="grid grid-cols-2 gap-5"><div><dt className="text-xs text-slate-400 mb-1">Код АЗК</dt><dd>{application.azkCode || '—'}</dd></div><div><dt className="text-xs text-slate-400 mb-1">Фактичний обсяг</dt><dd>{application.actualVolume ? `${application.actualVolume} м³` : 'Не вказано'}</dd></div><div><dt className="text-xs text-slate-400 mb-1">Ставка за одиницю</dt><dd>{application.unitPrice ? formatCurrency(application.unitPrice) : 'Не вказано'}</dd></div><div><dt className="text-xs text-slate-400 mb-1">Дата заявки</dt><dd>{formatDateTime(application.date)}</dd></div><div><dt className="text-xs text-slate-400 mb-1">Виплата виконавцю</dt><dd>{formatCurrency(application.payoutAmount)}</dd></div><div><dt className="text-xs text-slate-400 mb-1">Стан виплати</dt><dd>{application.payoutStatus}</dd></div></dl>
+              <dl className="grid grid-cols-2 gap-5"><div><dt className="text-xs text-slate-400 mb-1">Код АЗК</dt><dd>{application.azkCode || '—'}</dd></div><div><dt className="text-xs text-slate-400 mb-1">Фактичний обсяг</dt><dd>{formatWorkVolume(actualVolume)}</dd></div><div><dt className="text-xs text-slate-400 mb-1">Ставка за одиницю</dt><dd>{application.unitPrice ? formatCurrency(application.unitPrice) : 'Не вказано'}</dd></div><div><dt className="text-xs text-slate-400 mb-1">Дата заявки</dt><dd>{formatDateTime(application.date)}</dd></div><div><dt className="text-xs text-slate-400 mb-1">Виплата виконавцю</dt><dd>{formatCurrency(application.payoutAmount)}</dd></div><div><dt className="text-xs text-slate-400 mb-1">Стан виплати</dt><dd>{application.payoutStatus}</dd></div></dl>
               <section><h3 className="text-xs text-slate-400 mb-2">Виконавець</h3><p>{application.contractorName === '—' ? 'Не призначено' : application.contractorName}</p>{application.contractorPhone && application.contractorPhone !== '—' && <a className="inline-block mt-2 text-sky-300" href={`tel:${application.contractorPhone}`}>{application.contractorPhone}</a>}</section>
               {application.managerComment && <section><h3 className="text-xs text-slate-400 mb-2">Примітка офісу</h3><p className="whitespace-pre-wrap">{application.managerComment}</p></section>}
             </div>
           ) : tab === 'actions' ? (
             <div className="space-y-5">
+              <WorkVolumeEditor key={`${application.id}-${application.status}`} applicationId={application.id} onVolume={setActualVolume} onSaved={refreshAll}/>
               <section>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Швидкі дії</h3>
@@ -376,7 +384,7 @@ export default function ApplicationActionDrawer({ application, onClose, onChange
                   </button>
                   <button
                     onClick={handleComplete}
-                    disabled={busy !== null || application.status === 'Виконана' || application.status === 'Скасована'}
+                    disabled={busy !== null || !hasWorkVolume(actualVolume) || application.status === 'Виконана' || application.status === 'Скасована'}
                     className="flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.07] text-xs font-semibold text-emerald-300 disabled:opacity-35"
                   >
                     {busy === 'complete' ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle2 size={20} />}
