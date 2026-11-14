@@ -143,13 +143,9 @@ export async function fetchApplication(id: string): Promise<Application> {
 }
 
 export interface NewApplicationInput {
-  applicationNumber: string;
-  azkCode: string;
-  orderDateText: string;
-  title: string;
+  requestId: string;
+  customerSiteId: string;
   description: string;
-  address: string;
-  status: string;
   deadlineAt: string;
   managerComment: string;
   contractorId: string;
@@ -260,73 +256,15 @@ async function verifyContractor(contractorId: string) {
   return contractor;
 }
 
-async function notifyAssignedApplication(applicationId: string): Promise<void> {
-  const { data: notifyResult, error: notifyError } =
-    await supabase.functions.invoke('smart-api', {
-      body: {
-        action: 'notify_application',
-        application_id: applicationId,
-      },
-    });
-
-  if (notifyError) {
-    throw new Error(
-      `Заявку призначено, але не вдалося надіслати сповіщення в Telegram: ${notifyError.message}`,
-    );
-  }
-
-  if (notifyResult?.ok === false) {
-    throw new Error(
-      `Заявку призначено, але Telegram не отримав сповіщення: ${
-        notifyResult?.error || 'невідома помилка'
-      }`,
-    );
-  }
-}
-
 export async function insertApplication(
   input: NewApplicationInput,
-): Promise<void> {
-  if (!input.contractorId) {
-    throw new Error('Оберіть підрядника для заявки.');
-  }
-
-  await verifyContractor(input.contractorId);
-
-  const now = new Date().toISOString();
-
-  const { data: application, error } = await supabase
-    .from('applications')
-    .insert({
-      application_number: input.applicationNumber || null,
-      azk_code: input.azkCode || null,
-      order_date_text: input.orderDateText || null,
-      title: input.title,
-      description: input.description || null,
-      address: input.address || null,
-      status: 'assigned',
-      contractor_stage: 'offered',
-      accepted_at: null,
-      deadline_at: input.deadlineAt || null,
-      scheduled_at: input.deadlineAt || null,
-      manager_comment: input.managerComment || null,
-      contractor_id: input.contractorId,
-      payout_amount: input.payoutAmount ?? 0,
-      payout_status: 'pending',
-      updated_at: now,
-    })
-    .select('id')
-    .single();
-
-  if (error) {
-    throw new Error(`Не вдалося створити заявку: ${error.message}`);
-  }
-
-  if (!application?.id) {
-    throw new Error('Заявку створено без ID.');
-  }
-
-  await notifyAssignedApplication(application.id);
+): Promise<{id: string; application_number: string; notificationSent: boolean | null}> {
+  const { portal } = await import('@/portal/api');
+  return portal('office.create_application', {
+    request: input.requestId, site: input.customerSiteId, work: input.description,
+    date: input.deadlineAt, comment: input.managerComment,
+    contractor: input.contractorId, payout: input.payoutAmount ?? 0,
+  });
 }
 
 export async function assignApplicationContractor(
