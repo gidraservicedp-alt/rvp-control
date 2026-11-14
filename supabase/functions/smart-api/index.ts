@@ -3957,7 +3957,7 @@ async function openAct(
 
 async function reviewServiceAct(chatId:number,actId:string,decision:string,reason="",actor?:string) {
   const {data,error}=await supabase.rpc("rpv_service_review",{p_actor:actor || `telegram:${chatId}`,p_act:actId,p_decision:decision,p_reason:reason});
-  if(error) { await sendMessage(chatId,"Не вдалося прийняти рішення. Перевірте акт, дату, обсяг та прив’язку АЗК. Оновіть список.");return false; }
+  if(error) { const message=['P2001','P2002'].includes(error.code)?error.message:"Не вдалося прийняти рішення. Перевірте акт, дату, обсяг та прив’язку АЗК. Оновіть список."; if(actor && !actor.startsWith('telegram:')) throw Object.assign(new Error(message),{status:error.code==='P2001'?400:error.code==='P2002'?409:500}); await sendMessage(chatId,message);return false; }
   if(!data?.changed) {await sendMessage(chatId,"Цей акт уже оброблено.");return true;}
   const {data:act}=await supabase.from("acts").select("*").eq("id",actId).maybeSingle();
   const {data:app}=await supabase.from("applications").select("*").eq("id",data.application_id).maybeSingle();
@@ -13293,10 +13293,10 @@ Deno.serve(
             JSON.stringify({
               ok: false,
               error:
-                String(error),
+                error instanceof Error ? error.message : String(error),
             }),
             {
-              status: 500,
+              status: (error as any)?.status || 500,
               headers: {
                 ...corsHeaders,
                 "Content-Type":

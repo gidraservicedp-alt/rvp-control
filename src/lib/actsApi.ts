@@ -18,6 +18,7 @@ export function telegramFileUrl(telegramFileId: string): string {
 }
 
 export interface ActItem {
+  actualVolume?: number | null;
   serviceReport?: {work_date:string;volume:number|null;notes:string;state:string};
   id: string;
   actNumber: string | null;
@@ -57,6 +58,7 @@ interface ContractorRow {
 }
 
 interface ApplicationRow {
+  actual_volume: number | null;
   id: string;
   application_number: string | null;
   title: string;
@@ -220,7 +222,7 @@ export async function fetchActs(): Promise<ActItem[]> {
       ? supabase
           .from('applications')
           .select(
-            'id, application_number, title, address, description, azk_code',
+            'id, application_number, title, address, description, azk_code, actual_volume',
           )
           .in('id', applicationIds)
       : Promise.resolve({
@@ -320,6 +322,7 @@ export async function fetchActs(): Promise<ActItem[]> {
 
     return {
       serviceReport:row.service_report,
+      actualVolume:row.service_report?.volume ?? application?.actual_volume ?? null,
       id: row.id,
       actNumber:
         row.act_number,

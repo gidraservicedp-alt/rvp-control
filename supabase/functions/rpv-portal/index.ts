@@ -1,3 +1,4 @@
+import { officeWorkVolume, validWorkVolume } from './work_volume.ts';
 import { officeFinance } from './finance.ts';
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { PortalError, verifyTelegram, monthRange, uuid } from "./auth.ts";
@@ -22,6 +23,7 @@ const cities = new Map(ukraineCities.map((c) => [c[0], `${c[1]} · ${c[2]}`]));
 function result<T>(r: { data: T; error: unknown }): T {
   if (r.error) {
     const code=(r.error as any)?.code;
+    if(["P2001","P2002"].includes(code)) throw new PortalError(code==="P2001"?400:409,(r.error as any).message);
     if(code==="40001") throw new PortalError(409,"Заявка змінилася або дія зараз недоступна. Оновіть список.");
     if(code==="42501") throw new PortalError(403,"Недостатньо прав для цієї дії.");
     if(code==="22023") throw new PortalError(400,"Перевірте етап роботи, дату, обсяг та причину.");
@@ -107,6 +109,9 @@ async function visibleSite(user: number, id: string) {
   return s;
 }
 async function dispatch(req: Request, b: any): Promise<any> {
+  if (['office.work_volume','office.work_volume_set'].includes(b.action)) {
+    return officeWorkVolume(db,b,await office(req,b.action==='office.work_volume_set'));
+  }
   if (['office.finance','office.finance_history','office.finance_set','office.finance_confirm'].includes(b.action)) {
     const admin=await office(req,false);
     return await officeFinance(db,b,admin);
@@ -269,8 +274,7 @@ async function dispatch(req: Request, b: any): Promise<any> {
       if (
         !/^[\w-]{1,70}$/.test(act) ||
         !/^\d{4}-\d{2}-\d{2}$/.test(day) ||
-        (volume !== null &&
-          (!Number.isFinite(volume) || volume <= 0 || volume >= 1000000))
+        !validWorkVolume(volume)
       )
         throw new PortalError(400, "Перевірте номер акта, дату та обсяг.");
       const row = result(
@@ -535,7 +539,7 @@ async function dispatch(req: Request, b: any): Promise<any> {
   }
   if (b.action === "contractor.report") {
     await contractor(user);
-    if(typeof b.date!=="string" || !/^\d{4}-\d{2}-\d{2}$/.test(b.date) || (b.volume!==null && (typeof b.volume!=="number" || !Number.isFinite(b.volume) || b.volume<=0 || b.volume>=1000000)) || typeof b.notes!=="string" || b.notes.length>2000)
+    if(typeof b.date!=="string" || !/^\d{4}-\d{2}-\d{2}$/.test(b.date) || !validWorkVolume(b.volume) || typeof b.notes!=="string" || b.notes.length>2000)
       throw new PortalError(400,"Перевірте фактичний обсяг, дату і примітку.");
     return result(await db.rpc("rpv_service_report",{p_user:user,p_application:uuid(b.application),p_version:String(b.version),p_date:b.date,p_volume:b.volume,p_notes:b.notes}));
   }

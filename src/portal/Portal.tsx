@@ -1,3 +1,4 @@
+import { formatWorkVolume } from '@/workspace/workVolume';
 import { useEffect, useRef, useState } from "react";
 import {
   Droplets,
@@ -541,6 +542,7 @@ function ApplicationCard({
         <span>{app.awaiting_act ? "Результат на перевірці" : app.has_problem ? "Потребує уваги" : app.arrived_at && app.status!=="completed" ? "На об’єкті" : statusLabel(app.status)}</span>
       </div>
       <h3>{app.title}</h3>
+      <p className="rpv-job-volume">{formatWorkVolume(app.actual_volume)}</p>
       <p>{app.address}</p>
       <p className="rpv-job-description">{app.description}</p>
       {app.deadline_at && (

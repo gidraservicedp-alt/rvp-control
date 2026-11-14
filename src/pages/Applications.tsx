@@ -1,3 +1,4 @@
+import { formatWorkVolume } from '@/workspace/workVolume';
 import {
   useState,
   useMemo,
@@ -857,6 +858,7 @@ export default function Applications({
                       <div className="mt-1.5 truncate text-base font-semibold text-white">
                         {app.customer || 'Без замовника'}
                       </div>
+                      <div className="mt-2 text-xl font-bold text-sky-300">{formatWorkVolume(app.actualVolume)}</div>
                     </div>
 
                     <StatusBadge
@@ -1098,7 +1100,7 @@ export default function Applications({
                         </td>
 
                         <td className="px-4 py-3 text-slate-200 font-medium max-w-[160px] truncate">
-                          {app.customer}
+                          {app.customer}<div className="mt-1 text-sm font-semibold text-sky-300">{formatWorkVolume(app.actualVolume)}</div>
                         </td>
 
                         <td className="px-4 py-3 text-slate-400 max-w-[180px] truncate">

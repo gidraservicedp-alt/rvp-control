@@ -15,3 +15,12 @@ test('foreign/stale actions never report successful work',async()=>{const t=setu
 test('report wizard records volume/date before accepting an act',async()=>{const t=setup({state:`wf_volume:${id}`});await t.message('12,5');assert.equal(t.session(),`wf_date:${id}:12.5`);await t.message('2026-11-10');await t.message('2 рейси');assert.equal(t.calls[0].name,'rpv_service_report');assert.equal(t.calls[0].args.p_volume,12.5);assert.equal(t.calls[0].args.p_date,'2026-11-10');assert.equal(t.session(),`wf_upload:${id}`);});
 test('office rejection collects a reason and returns to office mode',async()=>{const t=setup();await t.flow.callback({from:{id:999},message:{chat:{id:-1001,type:'supergroup'}},data:`rejectact:${id}`});assert.equal(t.sent[0].chat_id,999);await t.flow.message({from:{id:999},chat:{id:999,type:'private'},text:'Нечітке фото'});assert.equal(t.calls[0].rejected[2],'Нечітке фото');assert.equal(t.session(),'');});
 test('office web actions fail closed for invalid sessions and finance/viewer roles',async()=>{for(const role of ['viewer','accountant','unknown']){const t=setup({role});assert.equal(await authorizeServiceOffice(t.db,'Bearer valid'),null);}const t=setup();assert.equal(await authorizeServiceOffice(t.db,''),null);assert.equal(await authorizeServiceOffice(t.db,'Bearer invalid'),null);assert.equal(await authorizeServiceOffice(t.db,'Bearer valid'),'office');});
+
+test('bot cannot skip cubic metres or resume an obsolete no-volume session',async()=>{
+ for(const input of ['Без відкачки','0','-1','1.2345','1000000']) {
+  const t=setup({state:`wf_volume:${id}`});await t.message(input);
+  assert.equal(t.calls.length,0);assert.equal(t.session(),`wf_volume:${id}`);
+ }
+ const t=setup({state:`wf_note:${id}:none:2026-11-10`});await t.message('Без примітки');
+ assert.equal(t.calls.length,0);assert.equal(t.session(),`wf_volume:${id}`);
+});

@@ -131,6 +131,7 @@ window.fetch = async (input, init) => {
   if (url.pathname.endsWith('/smart-api')) {
     const b=JSON.parse(String(init?.body));
     if (b.action==='approve_act_from_web' && b.act_id===acts[0].id) {
+      if(!(apps[3].actual_volume && apps[3].actual_volume>0))return Response.json({error:'Вкажіть фактичний обсяг у м³.'},{status:400});
       if(simulateReviewFailure){simulateReviewFailure=false;return Response.json({error:'Перевірка помилки: повторіть підтвердження.'},{status:409});}
       acts[0].status='approved';apps[3].status='completed';apps[3].awaiting_act=false;
       return json({ok:true});
@@ -138,6 +139,15 @@ window.fetch = async (input, init) => {
   }
   if (url.pathname.endsWith("/rpv-portal")) {
     const b = JSON.parse(String(init?.body));
+    if (b.action === 'office.work_volume' || b.action === 'office.work_volume_set') {
+      const a=apps.find(x=>x.id===b.application)!;
+      if(b.action.endsWith('_set')) {
+        if(!(b.volume>0)) return Response.json({error:'Вкажіть фактичний обсяг.'},{status:400});
+        if(b.version!==a.updated_at) return Response.json({error:'Заявка змінилася. Оновіть її.'},{status:409});
+        a.actual_volume=b.volume;a.updated_at=date();
+      }
+      return json({volume:a.actual_volume,version:a.updated_at,can_edit:!['completed','cancelled'].includes(a.status),report_locked:false,closed:['completed','cancelled'].includes(a.status)});
+    }
     if (b.action?.startsWith('office.finance'))return financeFixture(b);
     if (b.action === 'office.volume') {
       if(simulateVolumeFailure){simulateVolumeFailure=false;return Response.json({error:'Не вдалося завантажити лічильник РПВ. Спробуйте ще раз.'},{status:500});}

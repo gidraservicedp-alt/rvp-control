@@ -1,3 +1,5 @@
+import WorkVolumeEditor from '@/workspace/WorkVolumeEditor';
+import { hasWorkVolume } from '@/workspace/workVolume';
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -250,8 +252,10 @@ function ActDetailModal({
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [rejectReason,setRejectReason]=useState("");
   const [reviewError, setReviewError] = useState('');
+  const [actualVolume,setActualVolume]=useState<number|null>(act.actualVolume ?? act.serviceReport?.volume ?? null);
 
   const handleApprove = async () => {
+    if(!hasWorkVolume(actualVolume)) {setReviewError('Вкажіть і збережіть фактичний обсяг у м³.');return;}
     setReviewError('');
     setSaving('approved');
     try {
@@ -300,6 +304,7 @@ function ActDetailModal({
         </div>
 
         <div className="min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-6">
+          {act.applicationId && <div className="mb-4"><WorkVolumeEditor key={`${act.applicationId}-${currentStatus}`} applicationId={act.applicationId} onVolume={setActualVolume}/></div>}
           {/* Application */}
           <section>
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Заявка</h3>
@@ -364,18 +369,19 @@ function ActDetailModal({
             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
               Первинний акт
             </h3>
-            {act.serviceReport&&<div className="mb-4 rounded-lg border border-blue-400/20 bg-blue-500/10 p-4"><p className="font-semibold text-blue-300">Фактичний результат підрядника</p><p className="text-slate-200">Дата: {act.serviceReport.work_date} · {act.serviceReport.volume===null?"Без відкачки":`${act.serviceReport.volume} м³`}</p><p className="whitespace-pre-wrap text-slate-400">{act.serviceReport.notes}</p></div>}
+            {act.serviceReport&&<div className="mb-4 rounded-lg border border-blue-400/20 bg-blue-500/10 p-4"><p className="font-semibold text-blue-300">Фактичний результат підрядника</p><p className="text-slate-200">Дата: {act.serviceReport.work_date} · {act.serviceReport.volume===null?"Обсяг не вказано":`${act.serviceReport.volume} м³`}</p><p className="whitespace-pre-wrap text-slate-400">{act.serviceReport.notes}</p></div>}
             <FileGallery files={act.files} />
           </section>
         </div>
 
         {/* Action buttons */}
         <div className="shrink-0 bg-[#141720] border-t border-white/5 px-4 sm:px-6 py-4">
+          {currentStatus==='pending' && !hasWorkVolume(actualVolume) && <p className="mb-3 text-sm text-orange-200">Підтвердження доступне після збереження фактичного обсягу у м³.</p>}
           {reviewError && <p role="alert" className="mb-3 rounded-lg border border-red-500/25 bg-red-500/10 p-3 text-sm text-red-200 break-words">{reviewError}</p>}
           <div role="group" aria-label="Дії з актом" className="grid grid-cols-2 sm:grid-cols-[1fr_1fr_auto] gap-2">
           <button
             onClick={handleApprove}
-            disabled={saving !== null || currentStatus !== 'pending'}
+            disabled={saving !== null || currentStatus !== 'pending' || !hasWorkVolume(actualVolume)}
             className="flex min-w-0 min-h-11 items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving === 'approved' ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
